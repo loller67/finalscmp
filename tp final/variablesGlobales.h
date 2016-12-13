@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <vector>
+#include <time.h>
 
 #define G3D(V,X,Y,Z)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
@@ -129,6 +130,48 @@ bool pertenece(vector<int> v, int val){
 		
 		}
 	return false;
+}
+
+void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
+
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
+
+				S3D(mat1,i,j,k,G3D(mat2,i,j,k));
+
+
+			}
+		}
+
+	}
+
+}
+
+int restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
+
+
+	int max=0;
+	int m1=0;
+	int m2=0;
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
+
+				m2=G3D(mat2,i,j,k);
+				m1=G3D(mat1,i,j,k);
+				if(max<abs(m1-m2)){
+					max=abs(m1-m2);
+				}
+
+			}
+		}
+
+	}
+
+	return max;
+
+
 }
 
 void cargar_vectores(){
@@ -299,7 +342,7 @@ for(int k=0;k<kk;k++){
 	}
 }	  
      
-//C = ones(ii,jj,kk)*C0;
+
 S3D(C,io,jo,ko,1);
 
 int dia = 1;
@@ -369,8 +412,13 @@ if(pertenece(v47,G3D(talairach,i,j,k)))                              B[47]=B[47]
 	}
 
 	void guardar_datos(int n,int error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
+	//para ver el dia actual
+	time_t tiempo = time(0);
+        struct tm *tlocal = localtime(&tiempo);
+        char output[128];
+        strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
 	if (n%100==0){
-       //save(['DATOS_1i_' num2str(dia) '.mat' ],'C')
+	//save([DATOS_1I_ NUM2STR(DIA) .MAT], C]);
     }
     
     // Grabar info e informar por pantalla:
@@ -382,30 +430,36 @@ if(pertenece(v47,G3D(talairach,i,j,k)))                              B[47]=B[47]
             cout<< "error = " << error << endl;
   
     if (n % 10 ==0){
-        /*disp(datestr(now,'HH:MM AM'));
-        disp(['dia ' num2str(dia)]);
-        info = fopen('Info_1i.txt','a+');
-        fprintf(info,datestr(now,'HH:MM AM'));
-        fprintf(info,[' Dia ' num2str(dia)]);
-        fprintf(info,[' error = ' num2str(error)]);*/
+
+        printf("%s\n",output);
+	cout<<"Error: "<< error <<endl; 
 	}
+
         if (migracion == 1){
-            //cout<< info<< " en migracion"<<endl;
+        printf("%s\n",output);
+	cout<<"Error: "<< error <<endl; 
+	cout<<"En migración"<<endl; 
         }
         if (cantidad2 >= diagnostico){
-            //cout<< info<< " diagnosticado"<<endl;
+        printf("%s\n",output);
+	cout<<"Error: "<< error <<endl; 
+	cout<<"diagnosticado"<<endl; 
         }
         if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
-            //cout<< info<< " muerte del paciente"<<endl;
+        printf("%s\n",output);
+	cout<<"Error: "<< error <<endl; 
+	cout<<"muerte del paciente"<<endl; 
         }
         for (int a =0;a<47;a++){
             if (B[a]>=1){ //si esa area de Brodmann no es nula
                 B_R[a]=B[a]*100/B_T[a]; //la relativizo con respecto a la total del Talairach
                 //fprintf(info,[' Brodmann ' num2str(a) ' = ' num2str(eval(['B(' num2str(a) ')'])) ' porcentaje: ' num2str(eval(['B_R(' num2str(a) ')']))]);
+		cout<< "Brodmann: " << a << " = " << B[a]<<endl;
+		cout<< "Porcentaje: " <<  B_R[a]<<endl;
+
             }
         }
 		//cout << info<< endl;
-        //status = fclose(info);
         dia++; 
     
 }
@@ -421,9 +475,9 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     }
     int iter=0;
     int error = 1000;
-    //C_k2 = C; COM SE HAEC???
+    copyMatrix(C_k2,C); 
     while((iter < max_iter) && (error > max_error)){
-        //C_k1 = C_k2;
+        copyMatrix(C_k1,C_k2);
                
        //Calcular dominio
        for (int k=1;k<kk-1;k++){
@@ -457,8 +511,10 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     
     // Actualizar malla
     
-    //C = C_k2;
+    copyMatrix(C,C_k2);
     guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 }
+
+
 
 #endif
