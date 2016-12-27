@@ -195,6 +195,24 @@ void TransformDifusion(VECTOR3D &src){
 }
 
 
+void imprimir_matriz(VECTOR3D &mat){
+for(int i=0;i<TAM_X;i++){
+
+	for(int j=0;j<TAM_Y;j++){
+
+		for(int k=0;k<TAM_Z;k++){
+
+			//if(!G3D(mat,i,j,k)==0)
+			cout<<"valor: "<<G3D(mat,i,j,k)<<endl;
+
+		}
+
+	}
+
+}
+	
+
+}
 
 void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int originX, int originY, int originZ, VECTOR3D &difusionMat){
 
@@ -227,6 +245,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
                     S3D(difusionMat,x - originX,y - originY,z - originZ,s);
             
     }
+	imprimir_matriz(difusionMat);
     printf ("Difussion data read OK\n");
     //S3D(difusionMat,0,0,0,66);
 

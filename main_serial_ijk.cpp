@@ -213,6 +213,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
                 getline ( file, value, ',' );
                 x = atoi(value.c_str()) - 1;
                 getline ( file, value, ',' );
+		cout <<x<<endl;
         
                 y = atoi(value.c_str()) - 1;
                 getline ( file, value, ',' );

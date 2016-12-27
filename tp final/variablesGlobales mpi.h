@@ -21,6 +21,7 @@
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
 
+
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -148,27 +149,20 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 
 }
 
-double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
+int restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
-	double max=0;
-	double m1=0;
-	double m2=0;
-	double abs=0;
+
+	int max=0;
+	int m1=0;
+	int m2=0;
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
 			for(int k=0;k<kk;k++){
 
 				m2=G3D(mat2,i,j,k);
 				m1=G3D(mat1,i,j,k);
-				if(m1>=m2){
-					abs=m1-m2;
-
-				}else{
-					abs=m2-m1;
-
-				}
-				if(max<abs){
-					max=abs;
+				if(max<abs(m1-m2)){
+					max=abs(m1-m2);
 				}
 
 			}
@@ -196,25 +190,6 @@ void cargar_vectores(){
 	for(int k=1;k<kk;k++){
     z[k]=z[k-1]+h;
 	}
-
-}
-
-void imprimir_matriz(VECTOR3D &mat){
-for(int i=0;i<ii;i++){
-
-	for(int j=0;j<jj;j++){
-
-		for(int k=0;k<kk;k++){
-
-			if(!G3D(mat,i,j,k)==0)
-			cout<<"valor: "<<G3D(mat,i,j,k)<<endl;
-
-		}
-
-	}
-
-}
-	
 
 }
 
@@ -283,7 +258,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
                 getline ( file, value, ',' );
                 x = atoi(value.c_str()) - 1;
                 getline ( file, value, ',' );
-
+		//cout<<x<<endl;
 
                 y = atoi(value.c_str()) - 1;
                 getline ( file, value, ',' );
@@ -292,14 +267,13 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
                 getline ( file, value );
         
                 double s = atof(value.c_str());
-		//cout<<s<<endl;
-              //printf("%u,%u,%u\n", x,y,z);
-               // if (originX <= x && x - originX < tamX  && originY <= y && y - originY < tamY && originZ <= z && z - originZ < tamZ){
 
-                    S3D(difusionMat,x,y,z,s);
-            	//}
+               // printf("%u,%u,%u\n", x,y,z);
+                if (originX <= x && x - originX < tamX  && originY <= y && y - originY < tamY && originZ <= z && z - originZ < tamZ){
+			cout<<"if"<<endl;
+                    S3D(difusionMat,x - originX,y - originY,z - originZ,s);
+            	}
     }
-
     printf ("Difussion data read OK\n");
 
 }
@@ -311,7 +285,6 @@ for(int k=0;k<kk;k++){
         for(int i=0;i<ii;i++){	
 			 
 				if((G3D(cerebro,i,j,k)>110) && G3D(cerebro,i,j,k)<=225){ //sustancia blanca
-
 					S3D(p,i,j,k,0.107); //proliferacion neta, 1/dia
 					
 						if(pertenece(callo, G3D(talairach,i,j,k))) //cuerpo calloso
@@ -327,7 +300,6 @@ for(int k=0;k<kk;k++){
 							S3D(D,i,j,k,0.255); //igracion neta, mm2/dia
 							
 				}else{
-
 					if((G3D(cerebro,i,j,k)>=75) && G3D(cerebro,i,j,k)<=110){ //sustancia gris
 						S3D(p,i,j,k,0.107); 
 							if(pertenece(cerebelo,G3D(talairach,i,j,k)))//cerebelo
@@ -356,7 +328,6 @@ for(int k=0;k<kk;k++){
 			}
 		}
 	}
-
 }
 
 void inicializarCondiciones(){
@@ -445,27 +416,21 @@ if(pertenece(v47,G3D(talairach,i,j,k)))                              B[47]=B[47]
 void grabar_matriz(VECTOR3D &mat){
 //imprime en datos en algun orden la matriz
 	
-for(int i=0;i<ii;i++){
-	for(int j=0;j<jj;j++){
-		for(int k=0;k<kk;k++){
-			datos<<G3D(mat,i,j,k)<<endl;
-}
-}
-}
+
 
 }
 
-
-void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
+void guardar_datos(int n,int error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
 	//para ver el dia actual
 	time_t tiempo = time(0);
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
 	if (n%100==0){
-		//datos<< output<<endl;
+		datos<< output<<endl;
 		grabar_matriz(C);
     }
+    
     // Grabar info e informar por pantalla:
     if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;
@@ -473,15 +438,16 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 		}
     if(error > 10)
             cout<< "error = " << error << endl;
-  	info<< output;
-	info<<" dia: "<< dia<<" ";
-	info<< " error: " << error <<endl;
+  
     if (n % 10 ==0){
 
         printf("%s\n",output);
 	cout<<"dia: "<< dia <<endl;
 
-	
+	info<< "fecha: "<< output << endl;
+	info<<"dia: "<< dia <<endl;
+	info<< "error: " << error <<endl;
+ 
 	}
 
         if (migracion == 1){
@@ -493,16 +459,12 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
 		info<<"muerte del paciente"<<endl; 
         }
-
         for (int a =0;a<47;a++){
-            if (B[a]>=1&& B_T[a]>0){ //si esa area de Brodmann no es nula
-		
+            if (B[a]>=1){ //si esa area de Brodmann no es nula
                 B_R[a]=B[a]*100/B_T[a]; //la relativizo con respecto a la total del Talairach
-
                 //fprintf(info,[' Brodmann ' num2str(a) ' = ' num2str(eval(['B(' num2str(a) ')'])) ' porcentaje: ' num2str(eval(['B_R(' num2str(a) ')']))]);
-		//info<< "Brodmann: " << a << " = " << B[a]<<endl;
-		//info<< "Porcentaje: " <<  B_R[a]<<endl;	
-		//CONSULTAR DONDE VA PORQUE QUEDA UN ARCHIVO GIGANTE
+		info<< "Brodmann: " << a << " = " << B[a]<<endl;
+		info<< "Porcentaje: " <<  B_R[a]<<endl;
 
             }
         }
@@ -512,18 +474,19 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 
 
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){// PARTES COMENTADAS HACER
-	double max_error=0;
-
+	int max_error=0;
+	
 	if (dia <= 1500){
         max_error = 1;
 	}else{
         max_error = 10;
     }
     int iter=0;
-    double error = 1000;
-    copyMatrix(C_k2,C);
+    int error = 1000;
+    copyMatrix(C_k2,C); 
     while((iter < max_iter) && (error > max_error)){
         copyMatrix(C_k1,C_k2);
+               
        //Calcular dominio
        for (int k=1;k<kk-1;k++){
            for (int j=1;j<jj-1;j++){
@@ -534,10 +497,8 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 					}else{ //proliferacion y migracion
 						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
 					}
-
 					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
 					S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-					if(!G3D(C_k2,i,j,k)==0)
 					if (G3D(C_k2,i,j,k) > C_max){
 						S3D(C_k2,i,j,k, C_max);
 					}
@@ -559,7 +520,6 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     // Actualizar malla
     
     copyMatrix(C,C_k2);
-
     guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 }
 

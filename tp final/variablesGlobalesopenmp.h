@@ -20,7 +20,7 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-
+#define threads 4
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -513,7 +513,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){// PARTES COMENTADAS HACER
 	double max_error=0;
-
+	int i,j,k;
 	if (dia <= 1500){
         max_error = 1;
 	}else{
@@ -524,10 +524,11 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     copyMatrix(C_k2,C);
     while((iter < max_iter) && (error > max_error)){
         copyMatrix(C_k1,C_k2);
+#pragma omp parallel for collapse(3)  schedule(static) private(max_error,iter,error,ii,jj,kk,C_max,i,j,k) num_threads(threads)  
        //Calcular dominio
-       for (int k=1;k<kk-1;k++){
-           for (int j=1;j<jj-1;j++){
-               for (int i=1;i<ii-1;i++){
+       for (k=1;k<kk-1;k++){
+           for (j=1;j<jj-1;j++){
+               for (i=1;i<ii-1;i++){
 					if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
                     S3D(M,i,j,k,0);
 				
