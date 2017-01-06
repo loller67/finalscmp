@@ -15,12 +15,13 @@
 #include <unistd.h>
 #include <vector>
 #include <time.h>
+#include <string.h>
 
 #define G3D(V,X,Y,Z)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 4
+#define threads 8
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -36,7 +37,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 5000; //corrida de 500 dias
+int nn = 3000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -44,7 +45,9 @@ int diagnostico = 3188; //Para diagnostico a un diametro de 18.26 mm
 int io = 32;
 int jo = 98;
 int ko = 85;
-
+int cantidad1 = 0; //para deteccion de celulas tumorales
+int cantidad2 = 0; //para diagnostico
+int cantidad3 = 0; //para letalidad
 
   vector<int> callo({508,509,510,514,515,651,652,657,694,695,711,712,713,714,715});
   vector<int>  tracto_opt({273,359,361,624,633,638,639,641});//8
@@ -301,7 +304,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
     }
 
     printf ("Difussion data read OK\n");
-
+//imprimir_matriz(difusionMat);
 }
 
 void TransformDifusion(){
@@ -448,6 +451,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
+			if(G3D(mat,i,j,k)!=0)
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -462,8 +466,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-	if (n%100==0){
-		//datos<< output<<endl;
+	if (n%500==0){
 		grabar_matriz(C);
     }
     // Grabar info e informar por pantalla:
@@ -499,10 +502,8 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 		
                 B_R[a]=B[a]*100/B_T[a]; //la relativizo con respecto a la total del Talairach
 
-                //fprintf(info,[' Brodmann ' num2str(a) ' = ' num2str(eval(['B(' num2str(a) ')'])) ' porcentaje: ' num2str(eval(['B_R(' num2str(a) ')']))]);
-		//info<< "Brodmann: " << a << " = " << B[a]<<endl;
-		//info<< "Porcentaje: " <<  B_R[a]<<endl;	
-		//CONSULTAR DONDE VA PORQUE QUEDA UN ARCHIVO GIGANTE
+		info<< "Brodmann: " << a << " = " << B[a]<<endl;
+		info<< "Porcentaje: " <<  B_R[a]<<endl;	
 
             }
         }
@@ -513,7 +514,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){// PARTES COMENTADAS HACER
 	double max_error=0;
-	int i,j,k;
+int k,i,j;
 	if (dia <= 1500){
         max_error = 1;
 	}else{
@@ -524,8 +525,8 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     copyMatrix(C_k2,C);
     while((iter < max_iter) && (error > max_error)){
         copyMatrix(C_k1,C_k2);
-#pragma omp parallel for collapse(3)  schedule(static) private(max_error,iter,error,ii,jj,kk,C_max,i,j,k) num_threads(threads)  
        //Calcular dominio
+#pragma omp parallel for collapse(3)  schedule(static) private(max_error,iter,error,ii,jj,kk,C_max,i,j,k) num_threads(threads)  
        for (k=1;k<kk-1;k++){
            for (j=1;j<jj-1;j++){
                for (i=1;i<ii-1;i++){
@@ -552,9 +553,6 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
        //Calcular error y actualizar
        error = restaMax(C_k1,C_k2);
        iter++;
-       //if (iter % 10 ==0){
-           //matriz_error=abs(C_k1-C_k2);
-       //}
     }
     
     // Actualizar malla

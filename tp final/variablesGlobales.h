@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <vector>
 #include <time.h>
+#include <string.h>
 
 #define G3D(V,X,Y,Z)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
@@ -36,7 +37,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 5000; //corrida de 500 dias
+int nn = 3000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -44,7 +45,9 @@ int diagnostico = 3188; //Para diagnostico a un diametro de 18.26 mm
 int io = 32;
 int jo = 98;
 int ko = 85;
-
+int cantidad1 = 0; //para deteccion de celulas tumorales
+int cantidad2 = 0; //para diagnostico
+int cantidad3 = 0; //para letalidad
 
   vector<int> callo({508,509,510,514,515,651,652,657,694,695,711,712,713,714,715});
   vector<int>  tracto_opt({273,359,361,624,633,638,639,641});//8
@@ -53,6 +56,8 @@ int ko = 85;
   vector<int>  estriado({349,350,351,435,436,464,465,492,493,494,495,496,571,598,601,692,693,379,382,596,597}); 
   vector<int>  globo({452,455,456,457,593,594,595,341,342,453,454,379,382,452,455,456,457,501,640,181,182,183,219,356,358,449,450,513});
   vector<int>  medula({5,6,71,72,215,216,341,342,343,344,354,355,437,438,440,453,454,498,499,574});
+vector<int> aux;
+
   vector<int> x(ii);
   vector<int> y(jj);
   vector<int> z(kk);
@@ -104,6 +109,10 @@ int ko = 85;
   vector<int> v46({607,608,658,696,697});
   vector<int> v47({146,147,185,188,298,299,302,392,393,399,401,402,409,466,467,468,511,604});
 
+vector <int> B_T({1200,4371,7001,8085,4237,39416,24752,15300,19996,24206,15580,0,13017,0,0,0,4793,24266,25120,11476,14008,12039,2720,8317,2592,0,309,2125,836,4030,11256,9586,196,1809,1274,3024,8910,10291,9508,22172,3032,2492,1676,3180,4156,7903,11145}); //vector con areas de Brodman totales del Talairach
+
+vector<int> B(47, 0);// vector que guarda areas de Brodmann absolutas
+vector<int> B_R(47, 0); //vector que guarda areas de Brodmann relativizadas
 
 VECTOR3D cerebro = CREATEM3D(ii,jj,kk);
 VECTOR3D talairach = CREATEM3D(ii,jj,kk);
@@ -301,7 +310,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
     }
 
     printf ("Difussion data read OK\n");
-
+//imprimir_matriz(difusionMat);
 }
 
 void TransformDifusion(){
@@ -314,36 +323,31 @@ for(int k=0;k<kk;k++){
 
 					S3D(p,i,j,k,0.107); //proliferacion neta, 1/dia
 					
-						if(pertenece(callo, G3D(talairach,i,j,k))) //cuerpo calloso
+						if(pertenece(callo, G3D(talairach,i,j,k))){ //cuerpo calloso
 							S3D(p,i,j,k,0.306); //un 20% mas
-				
-							
-						if (pertenece(tracto_opt,G3D(talairach,i,j,k))) //tracto optico
+						}else if (pertenece(tracto_opt,G3D(talairach,i,j,k))){ //tracto optico
 							S3D(D,i,j,k,0.306); //un 20% mas
-							
-						if(pertenece(tallo,G3D(talairach,i,j,k))) //tallo cerebral, medula, protuberancia, mesensefalo
+						}else if(pertenece(tallo,G3D(talairach,i,j,k))){ //tallo cerebral, medula, protuberancia, mesensefalo
 							S3D(D,i,j,k,0.204); //un 20% menos
-
+						}else{
 							S3D(D,i,j,k,0.255); //igracion neta, mm2/dia
+						}
 							
 				}else{
 
 					if((G3D(cerebro,i,j,k)>=75) && G3D(cerebro,i,j,k)<=110){ //sustancia gris
 						S3D(p,i,j,k,0.107); 
-							if(pertenece(cerebelo,G3D(talairach,i,j,k)))//cerebelo
+							if(pertenece(cerebelo,G3D(talairach,i,j,k))){//cerebelo
 								S3D(D,i,j,k,0);
-								
-							if(pertenece(estriado,G3D(talairach,i,j,k)))//nucleo estriado (caudado + putamen)
+							}else if(pertenece(estriado,G3D(talairach,i,j,k))){//nucleo estriado (caudado + putamen)
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-							if(pertenece(globo,G3D(talairach,i,j,k)))//globo palido, sustancia nigra, nucleo subtalamico, nucleo lentiforme, amigdala, claustrum
+							}else if(pertenece(globo,G3D(talairach,i,j,k))){//globo palido, sustancia nigra, nucleo subtalamico, nucleo lentiforme, amigdala, claustrum
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-							if(pertenece(medula,G3D(talairach,i,j,k))) //tallo cerebral, medula, protuberancia, mesensefalo
+							}else if(pertenece(medula,G3D(talairach,i,j,k))){ //tallo cerebral, medula, protuberancia, mesensefalo
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-								
+							}else{
 								S3D(D,i,j,k,0.051);
+							}
 					            
 					}else{
 					
@@ -355,6 +359,22 @@ for(int k=0;k<kk;k++){
 				}
 			}
 		}
+	}
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
+
+				if (G3D(D,i,j,k)==0.051&& G3D(talairach,i,j,k)>0 && G3D(talairach,i,j,k)!=255){ aux.push_back(G3D(talairach,i,j,k)); }
+
+
+			}
+		}
+
+	}
+	for(int i=0;i<aux.size();i++){
+
+if(pertenece(v17,aux[i]))                               cout<<"SI SEÑOR"<<endl;
+
 	}
 
 }
@@ -395,7 +415,7 @@ for(int k=1;k<kk-1;k++){
 
 void buscar_areas_Broodman(int i,int j,int k,vector<int>& B){ //busco areas de Brodmann
 	
-if(pertenece(v1,G3D(talairach,i,j,k)))                        		 B[1]=B[1]+1;
+if(pertenece(v1,G3D(talairach,i,j,k)))                               B[1]=B[1]+1;
 if(pertenece(v2,G3D(talairach,i,j,k)))                               B[2]=B[2]+1;
 if(pertenece(v3,G3D(talairach,i,j,k)))                               B[3]=B[3]+1;
 if(pertenece(v4,G3D(talairach,i,j,k)))                               B[4]=B[4]+1;
@@ -448,6 +468,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
+			if(G3D(mat,i,j,k)!=0)
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -462,8 +483,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-	if (n%100==0){
-		//datos<< output<<endl;
+	if (n%500==0){
 		grabar_matriz(C);
     }
     // Grabar info e informar por pantalla:
@@ -499,10 +519,8 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 		
                 B_R[a]=B[a]*100/B_T[a]; //la relativizo con respecto a la total del Talairach
 
-                //fprintf(info,[' Brodmann ' num2str(a) ' = ' num2str(eval(['B(' num2str(a) ')'])) ' porcentaje: ' num2str(eval(['B_R(' num2str(a) ')']))]);
-		//info<< "Brodmann: " << a << " = " << B[a]<<endl;
-		//info<< "Porcentaje: " <<  B_R[a]<<endl;	
-		//CONSULTAR DONDE VA PORQUE QUEDA UN ARCHIVO GIGANTE
+		info<< "Brodmann: " << a << " = " << B[a]<<endl;
+		info<< "Porcentaje: " <<  B_R[a]<<endl;	
 
             }
         }
@@ -551,9 +569,6 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
        //Calcular error y actualizar
        error = restaMax(C_k1,C_k2);
        iter++;
-       //if (iter % 10 ==0){
-           //matriz_error=abs(C_k1-C_k2);
-       //}
     }
     
     // Actualizar malla
