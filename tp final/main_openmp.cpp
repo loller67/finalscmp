@@ -5,13 +5,10 @@ void iteracion_temporal(){
 	for(int n=0;n<nn;n++){
 		//cout << "n: "<<n<<endl;
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-		vector <int> B_T({1200,4371,7001,8085,4237,39416,24752,15300,19996,24206,15580,0,13017,0,0,0,4793,24266,25120,11476,14008,12039,2720,8317,2592,0,309,2125,836,4030,11256,9586,196,1809,1274,3024,8910,10291,9508,22172,3032,2492,1676,3180,4156,7903,11145}); //vector con areas de Brodman totales del Talairach
-		vector<int> B(47, 0);// vector que guarda areas de Brodmann absolutas
-		vector<int> B_R(47, 0); //vector que guarda areas de Brodmann relativizadas
-/*		if(n%200==0){
-			dumpMatrixToVtk(C, "cerebro_" + to_string(n));   
-		}
-*/		for(int k=0;k<kk;k++){
+	//	if(n%200==0){
+	//		dumpMatrixToVtk(C, "tumor_" + to_string(n));   
+	//	}
+		for(int k=0;k<kk;k++){
 			for(int j=0;j<jj;j++){
 				for(int i=0;i<ii;i++){
 					if (G3D(C,i,j,k) >= 1){
@@ -31,12 +28,12 @@ void iteracion_temporal(){
 							if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
 									cantidad3=cantidad3+1;
 							}
-						}
+						
 					
-					 if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
+					 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
 							buscar_areas_Broodman(i,j,k,B);
 						}
-	   
+	   				}
 				} 
 			}  
 		}   
@@ -60,8 +57,12 @@ int main(){
 	printf ("Preprocessing talairach Matrix\n");
         dumpMatrixToVtk(talairach, "talairach");
 
+
+
+
     	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
+        dumpMatrixToVtk(D, "matriz D");
 	info.open("info.txt");
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
@@ -93,7 +94,7 @@ int main(){
         printf("Tiempo empleado: %g\n",elapsed);
 
 	printf ("Preprocessing result Matrix\n");
-	dumpMatrixToVtk(C, "cerebro_out");   
+	dumpMatrixToVtk(C, "tumor_out");   
 	cout<< "PROCESO TERMINADO"<<endl;
 	return 0;
 	}

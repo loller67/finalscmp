@@ -21,7 +21,7 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 8
+#define threads 5
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -37,7 +37,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 3000; //corrida de 500 dias
+int nn = 5000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -56,6 +56,8 @@ int cantidad3 = 0; //para letalidad
   vector<int>  estriado({349,350,351,435,436,464,465,492,493,494,495,496,571,598,601,692,693,379,382,596,597}); 
   vector<int>  globo({452,455,456,457,593,594,595,341,342,453,454,379,382,452,455,456,457,501,640,181,182,183,219,356,358,449,450,513});
   vector<int>  medula({5,6,71,72,215,216,341,342,343,344,354,355,437,438,440,453,454,498,499,574});
+vector<int> aux;
+
   vector<int> x(ii);
   vector<int> y(jj);
   vector<int> z(kk);
@@ -107,6 +109,10 @@ int cantidad3 = 0; //para letalidad
   vector<int> v46({607,608,658,696,697});
   vector<int> v47({146,147,185,188,298,299,302,392,393,399,401,402,409,466,467,468,511,604});
 
+vector <int> B_T({1200,4371,7001,8085,4237,39416,24752,15300,19996,24206,15580,0,13017,0,0,0,4793,24266,25120,11476,14008,12039,2720,8317,2592,0,309,2125,836,4030,11256,9586,196,1809,1274,3024,8910,10291,9508,22172,3032,2492,1676,3180,4156,7903,11145}); //vector con areas de Brodman totales del Talairach
+
+vector<int> B(47, 0);// vector que guarda areas de Brodmann absolutas
+vector<int> B_R(47, 0); //vector que guarda areas de Brodmann relativizadas
 
 VECTOR3D cerebro = CREATEM3D(ii,jj,kk);
 VECTOR3D talairach = CREATEM3D(ii,jj,kk);
@@ -311,42 +317,37 @@ void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
     for(int j=0;j<jj;j++){
-        for(int i=0;i<ii;i++){	
+        for(int i=0;i<ii;i++){
 			 
 				if((G3D(cerebro,i,j,k)>110) && G3D(cerebro,i,j,k)<=225){ //sustancia blanca
 
 					S3D(p,i,j,k,0.107); //proliferacion neta, 1/dia
 					
-						if(pertenece(callo, G3D(talairach,i,j,k))) //cuerpo calloso
+						if(pertenece(callo, G3D(talairach,i,j,k))){ //cuerpo calloso
 							S3D(p,i,j,k,0.306); //un 20% mas
-				
-							
-						if (pertenece(tracto_opt,G3D(talairach,i,j,k))) //tracto optico
+						}else if (pertenece(tracto_opt,G3D(talairach,i,j,k))){ //tracto optico
 							S3D(D,i,j,k,0.306); //un 20% mas
-							
-						if(pertenece(tallo,G3D(talairach,i,j,k))) //tallo cerebral, medula, protuberancia, mesensefalo
+						}else if(pertenece(tallo,G3D(talairach,i,j,k))){ //tallo cerebral, medula, protuberancia, mesensefalo
 							S3D(D,i,j,k,0.204); //un 20% menos
-
+						}else{
 							S3D(D,i,j,k,0.255); //igracion neta, mm2/dia
+						}
 							
 				}else{
 
 					if((G3D(cerebro,i,j,k)>=75) && G3D(cerebro,i,j,k)<=110){ //sustancia gris
 						S3D(p,i,j,k,0.107); 
-							if(pertenece(cerebelo,G3D(talairach,i,j,k)))//cerebelo
+							if(pertenece(cerebelo,G3D(talairach,i,j,k))){//cerebelo
 								S3D(D,i,j,k,0);
-								
-							if(pertenece(estriado,G3D(talairach,i,j,k)))//nucleo estriado (caudado + putamen)
+							}else if(pertenece(estriado,G3D(talairach,i,j,k))){//nucleo estriado (caudado + putamen)
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-							if(pertenece(globo,G3D(talairach,i,j,k)))//globo palido, sustancia nigra, nucleo subtalamico, nucleo lentiforme, amigdala, claustrum
+							}else if(pertenece(globo,G3D(talairach,i,j,k))){//globo palido, sustancia nigra, nucleo subtalamico, nucleo lentiforme, amigdala, claustrum
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-							if(pertenece(medula,G3D(talairach,i,j,k))) //tallo cerebral, medula, protuberancia, mesensefalo
+							}else if(pertenece(medula,G3D(talairach,i,j,k))){ //tallo cerebral, medula, protuberancia, mesensefalo
 								S3D(D,i,j,k,0.0408); //un 20% menos
-								
-								
+							}else{
 								S3D(D,i,j,k,0.051);
+							}
 					            
 					}else{
 					
@@ -398,7 +399,7 @@ for(int k=1;k<kk-1;k++){
 
 void buscar_areas_Broodman(int i,int j,int k,vector<int>& B){ //busco areas de Brodmann
 	
-if(pertenece(v1,G3D(talairach,i,j,k)))                        		 B[1]=B[1]+1;
+if(pertenece(v1,G3D(talairach,i,j,k)))                               B[1]=B[1]+1;
 if(pertenece(v2,G3D(talairach,i,j,k)))                               B[2]=B[2]+1;
 if(pertenece(v3,G3D(talairach,i,j,k)))                               B[3]=B[3]+1;
 if(pertenece(v4,G3D(talairach,i,j,k)))                               B[4]=B[4]+1;
@@ -514,7 +515,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){// PARTES COMENTADAS HACER
 	double max_error=0;
-int k,i,j;
+	int i,j,k;
 	if (dia <= 1500){
         max_error = 1;
 	}else{
@@ -523,10 +524,11 @@ int k,i,j;
     int iter=0;
     double error = 1000;
     copyMatrix(C_k2,C);
+
     while((iter < max_iter) && (error > max_error)){
         copyMatrix(C_k1,C_k2);
        //Calcular dominio
-#pragma omp parallel for collapse(3)  schedule(static) private(max_error,iter,error,ii,jj,kk,C_max,i,j,k) num_threads(threads)  
+#pragma omp parallel for collapse(3)  schedule(static) num_threads(threads)  
        for (k=1;k<kk-1;k++){
            for (j=1;j<jj-1;j++){
                for (i=1;i<ii-1;i++){
@@ -539,7 +541,6 @@ int k,i,j;
 
 					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
 					S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-					if(!G3D(C_k2,i,j,k)==0)
 					if (G3D(C_k2,i,j,k) > C_max){
 						S3D(C_k2,i,j,k, C_max);
 					}

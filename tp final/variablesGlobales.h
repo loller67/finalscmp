@@ -37,7 +37,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 3000; //corrida de 500 dias
+int nn = 10000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -317,7 +317,7 @@ void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
     for(int j=0;j<jj;j++){
-        for(int i=0;i<ii;i++){	
+        for(int i=0;i<ii;i++){
 			 
 				if((G3D(cerebro,i,j,k)>110) && G3D(cerebro,i,j,k)<=225){ //sustancia blanca
 
@@ -360,22 +360,6 @@ for(int k=0;k<kk;k++){
 			}
 		}
 	}
-	for(int i=0;i<ii;i++){
-		for(int j=0;j<jj;j++){
-			for(int k=0;k<kk;k++){
-
-				if (G3D(D,i,j,k)==0.051&& G3D(talairach,i,j,k)>0 && G3D(talairach,i,j,k)!=255){ aux.push_back(G3D(talairach,i,j,k)); }
-
-
-			}
-		}
-
-	}
-	for(int i=0;i<aux.size();i++){
-
-if(pertenece(v17,aux[i]))                               cout<<"SI SEÑOR"<<endl;
-
-	}
 
 }
 
@@ -389,8 +373,8 @@ for(int k=0;k<kk;k++){
    for(int j=0;j<jj;j++){
        for(int i=0;i<ii;i++){
        S3D(C,i,j,k,C0);
-       }
-	}
+}
+}
 }	  
      
 
@@ -547,7 +531,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
            for (int j=1;j<jj-1;j++){
                for (int i=1;i<ii-1;i++){
 					if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
-                    S3D(M,i,j,k,0);
+                    				S3D(M,i,j,k,0);
 				
 					}else{ //proliferacion y migracion
 						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
@@ -555,14 +539,13 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 
 					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
 					S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-					if(!G3D(C_k2,i,j,k)==0)
 					if (G3D(C_k2,i,j,k) > C_max){
 						S3D(C_k2,i,j,k, C_max);
 					}
 					if (G3D(C_k2,i,j,k) < 0.00001){
 						S3D(C_k2,i,j,k,0);
 					}
-				}
+		}
            }
        }
   
