@@ -39,7 +39,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 5000; //corrida de 500 dias
+int nn = 3000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -152,19 +152,24 @@ void screenMessage(const char *fmt, ...) {
 void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSize){
      //printf("[%u] Entering Halo\n", rank);
     
+MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
+          &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+
      if (rank % 2 == 0){
         //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
         // SEND Z4(0) <- Z4(1)
         if (rank > 0){
             //printf("[%u] [Send-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Send(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
+            //MPI_Send(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
             //printf("[%u] [Send-Left] END Halo size: %u\n", rank, workingSliceSize);
-
+MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
+          &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
         // SEND Z3(1) <- Z3(0)
 
-        if (rank < numProcs - 1){
+       /* if (rank < numProcs - 1){
             //printf("[%u] [Send-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
             MPI_Send(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
             //printf("[%u] [Send-Right] END Halo size: %u\n", rank, workingSliceSize);
@@ -172,28 +177,44 @@ void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSiz
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
-
+*/
 
         // RECV Z3(1) <- Z3(0)
-        if (rank > 0){
+     /*   if (rank > 0){
 
             //printf("[%u] [Recv-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
             MPI_Recv(&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // printf("[%u] [Recv-Left] END Halo size: %u\n", rank, workingSliceSize);
 
-        }
-
+       }
+*/
         // RECV Z4(0) <- Z4(1)
         if (rank < numProcs - 1){
             // printf("[%u] [Recv-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Recv(&slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
+          &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // printf("[%u] [Recv-Right] END Halo size: %u\n", rank, workingSliceSize);
 
         }
     }else{
             //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
         // SEND Z4(0) <- Z4(1)
-        if (rank > 0){
+	/*MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                int dest, int sendtag,
+                void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                int source, int recvtag,
+                MPI_Comm comm, MPI_Status *status)
+*/
+/*	MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+             MPI_Comm comm)
+*/
+/*	MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+             MPI_Comm comm, MPI_Status *status)
+*/
+	//MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
+          //      &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      /*  if (rank > 0){
             //printf("[%u] [Send-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
             MPI_Send(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
             //printf("[%u] [Send-Left] END Halo size: %u\n", rank, workingSliceSize);
@@ -208,24 +229,26 @@ void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSiz
             //printf("[%u] [Send-Right] END Halo size: %u\n", rank, workingSliceSize);
 
         }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
+*/
 
         // RECV Z3(1) <- Z3(0)
         if (rank > 0){
 
             //printf("[%u] [Recv-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Recv(&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            //MPI_Recv(&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // printf("[%u] [Recv-Left] END Halo size: %u\n", rank, workingSliceSize);
+	MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
+                &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         }
 
         // RECV Z4(0) <- Z4(1)
         if (rank < numProcs - 1){
             // printf("[%u] [Recv-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Recv(&slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            //MPI_Recv(&slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             // printf("[%u] [Recv-Right] END Halo size: %u\n", rank, workingSliceSize);
+	MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
+                &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         }
 

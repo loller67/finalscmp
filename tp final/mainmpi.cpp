@@ -13,7 +13,6 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
 						if (G3D(C_slice,i,j,k) >= 1){
-							cantidad1++;
 						}
 						if(G3D(C_slice,i,j,k) >= 1e7){
 							cantidad2=cantidad2+1;
@@ -58,7 +57,7 @@ int main(){
       // Find out rank, size
       MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
- //if (world_rank == 0) {
+ if (world_rank == 0) {
 	
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
@@ -75,7 +74,7 @@ int main(){
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-   // }
+   }
         MPI_Barrier(MPI_COMM_WORLD);
 
     chunkSize = (kk / world_size) ;
