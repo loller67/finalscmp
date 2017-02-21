@@ -39,7 +39,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 3000; //corrida de 500 dias
+int nn = 5000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -152,8 +152,8 @@ void screenMessage(const char *fmt, ...) {
 void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSize){
      //printf("[%u] Entering Halo\n", rank);
     
-MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
-          &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
+  //        &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 
      if (rank % 2 == 0){
@@ -599,24 +599,24 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-/*	if (n%500==0){
+	if (n%500==0){
 		grabar_matriz(C);
-  */  
+    }
     // Grabar info e informar por pantalla:
-    if(G3D(C,io,jo,ko) > C_mig && migracion == 0){
+    if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;
             migracion = 1; 
 		}
     if(error > 10)
             cout<< "error = " << error << endl;
-  	info<< output;
-	info<<" dia: "<< dia<<" ";
-	info<< " error: " << error <<endl;
+  	
     if (n % 10 ==0){
 
         printf("%s\n",output);
 	cout<<"dia: "<< dia <<endl;
-
+	info<< output;
+	info<<" dia: "<< dia/10<<" ";
+	info<< " error: " << error <<endl;
 	
 	}
 
@@ -641,6 +641,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
             }
         }
         dia++; 
+    
 }
 
 

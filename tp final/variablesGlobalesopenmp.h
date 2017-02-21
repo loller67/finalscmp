@@ -21,7 +21,7 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 5
+#define threads 30
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -477,14 +477,14 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 		}
     if(error > 10)
             cout<< "error = " << error << endl;
-  	info<< output;
-	info<<" dia: "<< dia<<" ";
-	info<< " error: " << error <<endl;
+  	
     if (n % 10 ==0){
 
         printf("%s\n",output);
 	cout<<"dia: "<< dia <<endl;
-
+	info<< output;
+	info<<" dia: "<< dia/10<<" ";
+	info<< " error: " << error <<endl;
 	
 	}
 

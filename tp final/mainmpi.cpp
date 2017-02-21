@@ -62,14 +62,14 @@ int main(){
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
 	printf ("Preprocessing difusion Matrix\n");
-	dumpMatrixToVtk(cerebro, "cerebro difusion");
+	//dumpMatrixToVtk(cerebro, "cerebro difusion");
 	printf ("Preprocessing talairach Matrix\n");
-        dumpMatrixToVtk(talairach, "talairach");
+      //  dumpMatrixToVtk(talairach, "talairach");
 
 
 	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
-        dumpMatrixToVtk(D, "matriz D");
+        //dumpMatrixToVtk(D, "matriz D");
 	info.open("info.txt");
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");

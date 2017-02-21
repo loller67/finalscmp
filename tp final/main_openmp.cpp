@@ -5,9 +5,9 @@ void iteracion_temporal(){
 	for(int n=0;n<nn;n++){
 		//cout << "n: "<<n<<endl;
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-		if(n%100==0){
-			dumpMatrixToVtk(C, "tumor_" + to_string(n));   
-		}
+	//	if(n%100==0){
+		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
+		//}
 		for(int k=0;k<kk;k++){
 			for(int j=0;j<jj;j++){
 				for(int i=0;i<ii;i++){
@@ -53,16 +53,16 @@ int main(){
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
 	printf ("Preprocessing difusion Matrix\n");
-	dumpMatrixToVtk(cerebro, "cerebro difusion");
+//	dumpMatrixToVtk(cerebro, "cerebro difusion");
 	printf ("Preprocessing talairach Matrix\n");
-        dumpMatrixToVtk(talairach, "talairach");
+  //      dumpMatrixToVtk(talairach, "talairach");
 
 
 
 
     	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
-        dumpMatrixToVtk(D, "matriz D");
+    //    dumpMatrixToVtk(D, "matriz D");
 	info.open("info.txt");
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
@@ -94,7 +94,7 @@ int main(){
         printf("Tiempo empleado: %g\n",elapsed);
 
 	printf ("Preprocessing result Matrix\n");
-	dumpMatrixToVtk(C, "tumor_out");   
+//	dumpMatrixToVtk(C, "tumor_out");   
 	cout<< "PROCESO TERMINADO"<<endl;
 	return 0;
 	}
