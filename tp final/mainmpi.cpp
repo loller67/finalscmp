@@ -9,6 +9,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 			//if(n%200==0){
 			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 			//}
+			if (!(G3D(C,io,jo,ko) < C_mig) && !estoy_en_paralelo){
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -37,6 +38,40 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 					} 
 				}  
 			}
+				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
+
+		}else{
+			estoy_en_paralelo= true;
+			for(int k=0;k<kk;k++){
+				for(int j=0;j<jj;j++){
+					for(int i=0;i<ii;i++){
+						if (G3D(C_slice,i,j,k) >= 1){
+						}
+						if(G3D(C_slice,i,j,k) >= 1e7){
+							cantidad2=cantidad2+1;
+
+							if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
+								cantidad3=cantidad3+2;
+
+							}else{
+								if(pertenece(cerebelo,G3D(talairach,i,j,k)))
+										cantidad3=cantidad3+2;
+								if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
+										cantidad3=cantidad3+2;
+								if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
+										cantidad3=cantidad3+1;
+								}
+						
+					
+						 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
+								buscar_areas_Broodman(i,j,k,B);
+							}
+		   				}
+					} 
+				}  
+			}
+			
+			
         //screenMessage("Waiting for processes to border exchange...\n");
         MPI_Barrier(MPI_COMM_WORLD);
         // Intercambio de bordes Cn entre procesos vecinos
@@ -49,7 +84,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 	
 
 }
-
+}
 
 int main(){
  // Initialize the MPI environment

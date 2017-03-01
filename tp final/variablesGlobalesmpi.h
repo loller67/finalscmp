@@ -50,6 +50,7 @@ int ko = 85;
 int cantidad1 = 0; //para deteccion de celulas tumorales
 int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
+bool estoy_en_paralelo= false;
 
   vector<int> callo({508,509,510,514,515,651,652,657,694,695,711,712,713,714,715});
   vector<int>  tracto_opt({273,359,361,624,633,638,639,641});//8
@@ -658,35 +659,54 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 
     copyMatrix(CK2_slice,C_slice);
     while((iter < max_iter) && (error > max_error)){
+	S3D(CK1_slice,io,jo,ko,G3D(CK2_slice,io,jo,ko));
+	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+		S3D(M,io,jo,ko,0);
+		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
+		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
+		if (G3D(C_k2,io,jo,ko) > C_max){
+			S3D(C_k2,io,jo,ko, C_max);
+		}
+		if (G3D(C_k2,io,jo,ko) < 0.00001){
+			S3D(C_k2,io,jo,ko,0);
+		}
+		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+			error=G3D(C_k1,io,jo,ko)-G3D(C_k2,io,jo,ko);
+
+		}else{
+			error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
+		}
+       		iter++;
+	}else{
         copyMatrix(CK1_slice,CK2_slice);
        //Calcular dominio
-       for (int k=1;k<chunkSize-1;k++){
-           for (int j=1;j<jj-1;j++){
-               for (int i=1;i<ii-1;i++){
-					if (G3D(C_slice,io,jo,ko) < C_mig){ //proliferacion
-                    S3D(M,i,j,k,0);
+	       for (int k=1;k<chunkSize-1;k++){
+		   for (int j=1;j<jj-1;j++){
+		       for (int i=1;i<ii-1;i++){
+						if (G3D(C_slice,io,jo,ko) < C_mig){ //proliferacion
+		            S3D(M,i,j,k,0);
 				
-					}else{ //proliferacion y migracion
-						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
-					}
+						}else{ //proliferacion y migracion
+							S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
+						}
 
-					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
-					S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-					if (G3D(CK2_slice,i,j,k) > C_max){
-						S3D(CK2_slice,i,j,k, C_max);
+						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
+						S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
+						if (G3D(CK2_slice,i,j,k) > C_max){
+							S3D(CK2_slice,i,j,k, C_max);
+						}
+						if (G3D(CK2_slice,i,j,k) < 0.00001){
+							S3D(CK2_slice,i,j,k,0);
+						}
 					}
-					if (G3D(CK2_slice,i,j,k) < 0.00001){
-						S3D(CK2_slice,i,j,k,0);
-					}
-				}
-           }
-       }
-  
-       //Calcular error y actualizar
-       error = restaMax(CK1_slice,CK2_slice);
-       iter++;
+		   }
+	       }
+	  
+	       //Calcular error y actualizar
+	       error = restaMax(CK1_slice,CK2_slice);
+	       iter++;
+	    }
     }
-    
     // Actualizar malla
     
     copyMatrix(C_slice,CK2_slice);
@@ -694,7 +714,6 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 	    guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	}
 }
-
 
 
 #endif
