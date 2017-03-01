@@ -9,7 +9,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 			//if(n%200==0){
 			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 			//}
-			if (!(G3D(C,io,jo,ko) < C_mig) && !estoy_en_paralelo){
+			if ((G3D(C,io,jo,ko) < C_mig) ){
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -38,10 +38,11 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 					} 
 				}  
 			}
-				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
+				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C,C_k1,C_k2);
+				//doHaloTransfer(C_slice, world_rank, world_size, workingSize);
+				//MPI_Barrier(MPI_COMM_WORLD);
 
 		}else{
-			estoy_en_paralelo= true;
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -75,8 +76,10 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
         //screenMessage("Waiting for processes to border exchange...\n");
         MPI_Barrier(MPI_COMM_WORLD);
         // Intercambio de bordes Cn entre procesos vecinos
-        //screenMessage("Starting border exchange...\n");
+        //screenMessage("Starting border exchange...\n");	
+cout<<"sali"<<endl;
         doHaloTransfer(C_slice, world_rank, world_size, workingSize);
+
         MPI_Barrier(MPI_COMM_WORLD);
 	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
 

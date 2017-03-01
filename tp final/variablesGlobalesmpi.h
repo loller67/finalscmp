@@ -39,7 +39,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 5000; //corrida de 500 dias
+int nn = 3000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -657,9 +657,14 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     int iter=0;
     double error = 1000;
 
+    if (G3D(C,io,jo,ko) < C_mig){
+
+    copyMatrix(C_k2,C);
+    }else{
     copyMatrix(CK2_slice,C_slice);
+    }
     while((iter < max_iter) && (error > max_error)){
-	S3D(CK1_slice,io,jo,ko,G3D(CK2_slice,io,jo,ko));
+	S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
 	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
 		S3D(M,io,jo,ko,0);
 		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
@@ -708,8 +713,13 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 	    }
     }
     // Actualizar malla
-    
+    if (G3D(C,io,jo,ko) < C_mig){
+    copyMatrix(C,C_k2);
+    }else{
     copyMatrix(C_slice,CK2_slice);
+    }
+
+
 	if (world_rank == 0) {
 	    guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	}
