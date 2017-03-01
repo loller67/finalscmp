@@ -37,7 +37,7 @@ double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
 double IM = 5; //indice mitotico
-int nn = 10000; //corrida de 500 dias
+int nn = 3000; //corrida de 500 dias
 int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -525,35 +525,52 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     double error = 1000;
     copyMatrix(C_k2,C);
     while((iter < max_iter) && (error > max_error)){
-        copyMatrix(C_k1,C_k2);
+		S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
        //Calcular dominio
-       for (int k=1;k<kk-1;k++){
-           for (int j=1;j<jj-1;j++){
-               for (int i=1;i<ii-1;i++){
-					if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
-                    				S3D(M,i,j,k,0);
-				
-					}else{ //proliferacion y migracion
-						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
-					}
-
-					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
-					S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-					if (G3D(C_k2,i,j,k) > C_max){
-						S3D(C_k2,i,j,k, C_max);
-					}
-					if (G3D(C_k2,i,j,k) < 0.00001){
-						S3D(C_k2,i,j,k,0);
-					}
+	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+		S3D(M,io,jo,ko,0);
+		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
+		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
+		if (G3D(C_k2,io,jo,ko) > C_max){
+			S3D(C_k2,io,jo,ko, C_max);
 		}
-           }
-       }
+		if (G3D(C_k2,io,jo,ko) < 0.00001){
+			S3D(C_k2,io,jo,ko,0);
+		}
+		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+			error=G3D(C_k1,io,jo,ko)-G3D(C_k2,io,jo,ko);
+
+		}else{
+			error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
+		}
+       		iter++;
+	}else{//proliferacion y migracion
+
+               copyMatrix(C_k1,C_k2);
+	       for (int k=1;k<kk-1;k++){
+		   for (int j=1;j<jj-1;j++){
+		       for (int i=1;i<ii-1;i++){
+
+			S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
+						
+
+						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
+						S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
+						if (G3D(C_k2,i,j,k) > C_max){
+							S3D(C_k2,i,j,k, C_max);
+						}
+						if (G3D(C_k2,i,j,k) < 0.00001){
+							S3D(C_k2,i,j,k,0);
+						}
+			}
+		   }
+	       }
   
        //Calcular error y actualizar
        error = restaMax(C_k1,C_k2);
        iter++;
+	}
     }
-    
     // Actualizar malla
     
     copyMatrix(C,C_k2);

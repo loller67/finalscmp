@@ -21,7 +21,7 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 30
+#define threads 1
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B

@@ -5,9 +5,11 @@ void iteracion_temporal(){
 	for(int n=0;n<nn;n++){
 		//cout << "n: "<<n<<endl;
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-		if(n%500==0){
-			dumpMatrixToVtk(C, "tumor_" + to_string(n));   
-		}
+		//if(n%500==0){
+		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
+		//}
+
+	if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
 		for(int k=0;k<kk;k++){
 			for(int j=0;j<jj;j++){
 				for(int i=0;i<ii;i++){
@@ -37,7 +39,7 @@ void iteracion_temporal(){
 				} 
 			}  
 		}   
-		
+	}
 		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
 
 	}
@@ -53,16 +55,16 @@ int main(){
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
 	printf ("Preprocessing difusion Matrix\n");
-	dumpMatrixToVtk(cerebro, "cerebro difusion");
+	//dumpMatrixToVtk(cerebro, "cerebro difusion");
 	printf ("Preprocessing talairach Matrix\n");
-        dumpMatrixToVtk(talairach, "talairach");
+        //dumpMatrixToVtk(talairach, "talairach");
 
 
 
 
     	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
-        dumpMatrixToVtk(D, "matriz D");
+        //dumpMatrixToVtk(D, "matriz D");
 	info.open("info.txt");
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
