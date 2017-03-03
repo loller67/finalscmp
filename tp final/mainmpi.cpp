@@ -9,7 +9,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 			//if(n%200==0){
 			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 			//}
-			if ((G3D(C,io,jo,ko) < C_mig) ){
+			if ((G3D(C,io,jo,ko) < C_mig) && !estoy_en_paralelo){//proliferacion (ESTO ES SERIAL)
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -39,10 +39,26 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 				}  
 			}
 				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C,C_k1,C_k2);
-				//doHaloTransfer(C_slice, world_rank, world_size, workingSize);
-				//MPI_Barrier(MPI_COMM_WORLD);
+				
 
-		}else{
+		}else{//sector paralelo
+			if(!estoy_en_paralelo){
+				cout <<"sección paralela"<<endl;
+				estoy_en_paralelo=true;
+				MPI_Scatter(&C[0],chunkSize* (ii*jj),MPI_DOUBLE,&C_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+				// Paso capas internas a los procesos (arranco de Z1)
+					    
+				screenMessage("Scatering CK2\n");
+				MPI_Scatter(&C_k1[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK1_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
+					    
+				screenMessage("Scatering CK1\n");
+				MPI_Scatter(&C_k2[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK2_slice[0],chunkSize* (ii*jj) ,MPI_DOUBLE,0,MPI_COMM_WORLD);
+    
+
+
+   					 MPI_Barrier(MPI_COMM_WORLD);
+			}
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -71,15 +87,13 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 					} 
 				}  
 			}
-			
+			estoy_en_paralelo=true;
 			
         //screenMessage("Waiting for processes to border exchange...\n");
         MPI_Barrier(MPI_COMM_WORLD);
         // Intercambio de bordes Cn entre procesos vecinos
         //screenMessage("Starting border exchange...\n");	
-cout<<"sali"<<endl;
         doHaloTransfer(C_slice, world_rank, world_size, workingSize);
-
         MPI_Barrier(MPI_COMM_WORLD);
 	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
 

@@ -613,24 +613,24 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
   	
     if (n % 10 ==0){
 
-        printf("%s\n",output);
-	cout<<"dia: "<< dia <<endl;
-	info<< output;
-	info<<" dia: "<< dia/10<<" ";
-	info<< " error: " << error <<endl;
+		printf("%s\n",output);
+		cout<<"iteracion: "<< dia <<endl;
+		info<< output;
+		info<<" dia: "<< dia/10<<" ";
+		info<< " error: " << error <<endl;
 	
+	
+
+		if (migracion == 1){
+			info<<"En migración \n"; 
+		}
+		if (cantidad2 >= diagnostico){
+			info<<"diagnosticado"<<endl; 
+		}
+		if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
+			info<<"muerte del paciente"<<endl; 
+		}
 	}
-
-        if (migracion == 1){
-		info<<"En migración \n"; 
-        }
-        if (cantidad2 >= diagnostico){
-		info<<"diagnosticado"<<endl; 
-        }
-        if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
-		info<<"muerte del paciente"<<endl; 
-        }
-
         for (int a =0;a<47;a++){
             if (B[a]>=1&& B_T[a]>0){ //si esa area de Brodmann no es nula
 		
@@ -658,14 +658,14 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     double error = 1000;
 
     if (G3D(C,io,jo,ko) < C_mig){
-
-    copyMatrix(C_k2,C);
+    	copyMatrix(C_k2,C);
     }else{
-    copyMatrix(CK2_slice,C_slice);
+    	copyMatrix(CK2_slice,C_slice);
     }
+
     while((iter < max_iter) && (error > max_error)){
 	S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
-	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion (ESTO ES SERIAL)
 		S3D(M,io,jo,ko,0);
 		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
 		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
