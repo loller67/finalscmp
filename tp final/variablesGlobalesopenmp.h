@@ -130,7 +130,7 @@ VECTOR3D M = CREATEM3D(ii,jj,kk);
 
 //FUNCIONES
 
-
+//Chequea pertenencia del valor en el vector
 bool pertenece(vector<int> v, int val){
 	
 	for(int i=0;i<v.size();i++){
@@ -140,7 +140,7 @@ bool pertenece(vector<int> v, int val){
 		}
 	return false;
 }
-
+//guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	for(int i=0;i<ii;i++){
@@ -156,7 +156,7 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	}
 
 }
-
+//funcion para normalizar los valores de una matriz
 void dividir(VECTOR3D &m, int num){
 
 	for(int i=0;i<ii;i++){
@@ -173,7 +173,7 @@ void dividir(VECTOR3D &m, int num){
 
 
 }
-
+//calcula el valor de la resta maxima de todas las dimensiones de las dos matrices
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	double max=0;
@@ -224,7 +224,7 @@ void cargar_vectores(){
 	}
 
 }
-
+// imprime valores de la matriz, usado para debuggear
 void imprimir_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 
@@ -232,7 +232,7 @@ for(int i=0;i<ii;i++){
 
 		for(int k=0;k<kk;k++){
 
-			if(!G3D(mat,i,j,k)==0)
+
 			cout<<"valor: "<<G3D(mat,i,j,k)<<endl;
 
 		}
@@ -243,7 +243,7 @@ for(int i=0;i<ii;i++){
 	
 
 }
-
+//funcion para obtener la fecha
 std::string GetLocalTime() {
     auto now(std::chrono::system_clock::now());
     auto seconds_since_epoch(
@@ -263,6 +263,8 @@ std::string GetLocalTime() {
     std::to_string((now.time_since_epoch() - seconds_since_epoch).count());
 }
 
+
+// guarda los valores de la matriz en el archivo .vtk
 void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     cout << "Dumping to VTK..." << endl;
     
@@ -292,7 +294,7 @@ void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     
     fbmc.close();
 }
-
+//funcion para levantar las matrices de disco
 void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int originX, int originY, int originZ, VECTOR3D &difusionMat){
 
     printf ("Reading difussion data file %s, section (%u,%u,%u),(%u,%u,%u)\n", dataFile.c_str(), originX, originY, originZ, originX + tamX, originY+tamY, originZ+tamZ);
@@ -330,6 +332,8 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
 //imprimir_matriz(difusionMat);
 }
 
+
+//Funcion que inicializa matriz D y p
 void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
@@ -380,6 +384,8 @@ for(int k=0;k<kk;k++){
 
 }
 
+
+//funcion que setea condiciones iniciales
 void inicializarCondiciones(){
 	
 //Origen del tumor en:
@@ -469,7 +475,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
-			if(G3D(mat,i,j,k)!=0)
+			//if(G3D(mat,i,j,k)!=0)
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -477,7 +483,7 @@ for(int i=0;i<ii;i++){
 
 }
 
-
+//funcion para guardar datos en disco
 void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
 	//para ver el dia actual
 	time_t tiempo = time(0);

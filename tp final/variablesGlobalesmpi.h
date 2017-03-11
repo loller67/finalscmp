@@ -138,6 +138,7 @@ int scatterSize = chunkSize - 1;
 int workingSize = chunkSize + 1;
 //FUNCIONES MPI
 
+//funcion que imprime por pantalla
 void screenMessage(const char *fmt, ...) {
     
     int world_rank;
@@ -150,104 +151,41 @@ void screenMessage(const char *fmt, ...) {
     }
 }
 
+
+//funcion que transmite las slices entre los procesos, utiliza sendrecv y no send y recv por separado porque tenia deadlock
 void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSize){
      //printf("[%u] Entering Halo\n", rank);
     
-//MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
-  //        &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
 
 
      if (rank % 2 == 0){
         //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
         // SEND Z4(0) <- Z4(1)
         if (rank > 0){
-            //printf("[%u] [Send-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            //MPI_Send(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
-            //printf("[%u] [Send-Left] END Halo size: %u\n", rank, workingSliceSize);
+
 MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
           &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
-        // SEND Z3(1) <- Z3(0)
 
-       /* if (rank < numProcs - 1){
-            //printf("[%u] [Send-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Send(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-            //printf("[%u] [Send-Right] END Halo size: %u\n", rank, workingSliceSize);
-
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-*/
-
-        // RECV Z3(1) <- Z3(0)
-     /*   if (rank > 0){
-
-            //printf("[%u] [Recv-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Recv(&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            // printf("[%u] [Recv-Left] END Halo size: %u\n", rank, workingSliceSize);
-
-       }
-*/
-        // RECV Z4(0) <- Z4(1)
         if (rank < numProcs - 1){
-            // printf("[%u] [Recv-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
 MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
           &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            // printf("[%u] [Recv-Right] END Halo size: %u\n", rank, workingSliceSize);
 
         }
     }else{
-            //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
-        // SEND Z4(0) <- Z4(1)
-	/*MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                int dest, int sendtag,
-                void *recvbuf, int recvcount, MPI_Datatype recvtype,
-                int source, int recvtag,
-                MPI_Comm comm, MPI_Status *status)
-*/
-/*	MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-             MPI_Comm comm)
-*/
-/*	MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
-             MPI_Comm comm, MPI_Status *status)
-*/
-	//MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
-          //      &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-      /*  if (rank > 0){
-            //printf("[%u] [Send-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Send(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD);
-            //printf("[%u] [Send-Left] END Halo size: %u\n", rank, workingSliceSize);
-
-        }
-
-        // SEND Z3(1) <- Z3(0)
-
-        if (rank < numProcs - 1){
-            //printf("[%u] [Send-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            MPI_Send(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-            //printf("[%u] [Send-Right] END Halo size: %u\n", rank, workingSliceSize);
-
-        }
-*/
-
-        // RECV Z3(1) <- Z3(0)
         if (rank > 0){
 
-            //printf("[%u] [Recv-Left] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            //MPI_Recv(&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            // printf("[%u] [Recv-Left] END Halo size: %u\n", rank, workingSliceSize);
+            
 	MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
                 &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         }
 
-        // RECV Z4(0) <- Z4(1)
+
         if (rank < numProcs - 1){
-            // printf("[%u] [Recv-Right] BEGIN Halo size: %u\n", rank, workingSliceSize);
-            //MPI_Recv(&slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            // printf("[%u] [Recv-Right] END Halo size: %u\n", rank, workingSliceSize);
+
 	MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
                 &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -264,7 +202,7 @@ MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, 
 
 //FUNCIONES
 
-
+//chequea pertenencia de un valor en un vector
 bool pertenece(vector<int> v, int val){
 	
 	for(int i=0;i<v.size();i++){
@@ -275,6 +213,8 @@ bool pertenece(vector<int> v, int val){
 	return false;
 }
 
+
+//copia la matriz 2 en matriz 1
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	for(int k=0;k<chunkSize;k++){
 		for(int i=0;i<ii;i++){
@@ -289,7 +229,7 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	}
 
 }
-
+//calcula el valor maximo de la resta de todas las dimensiones entre m1 y m2
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	double max=0;
@@ -359,7 +299,7 @@ for(int i=0;i<ii;i++){
 	
 
 }
-
+//calcula el tiempo
 std::string GetLocalTime() {
     auto now(std::chrono::system_clock::now());
     auto seconds_since_epoch(
@@ -378,7 +318,7 @@ std::string GetLocalTime() {
     return std::string(temp) +
     std::to_string((now.time_since_epoch() - seconds_since_epoch).count());
 }
-
+//guarda el valor de la matriz en el vtk
 void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     cout << "Dumping to VTK..." << endl;
     
@@ -408,7 +348,7 @@ void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     
     fbmc.close();
 }
-
+//funcion que levanta los valores de los csv
 void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int originX, int originY, int originZ, VECTOR3D &difusionMat){
 
     printf ("Reading difussion data file %s, section (%u,%u,%u),(%u,%u,%u)\n", dataFile.c_str(), originX, originY, originZ, originX + tamX, originY+tamY, originZ+tamZ);
@@ -445,7 +385,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
     printf ("Difussion data read OK\n");
 //imprimir_matriz(difusionMat);
 }
-
+//setea los valores de p y D
 void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
@@ -496,6 +436,8 @@ for(int k=0;k<kk;k++){
 
 }
 
+
+//setea condiciones iniciales
 void inicializarCondiciones(){
 	
 //Origen del tumor en:
@@ -585,7 +527,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
-			if(G3D(mat,i,j,k)!=0)
+
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -593,7 +535,7 @@ for(int i=0;i<ii;i++){
 
 }
 
-
+//guarda datos a disco, esto lo hace un solo proceso para evitar problemas
 void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
 	//para ver el dia actual
 	time_t tiempo = time(0);
@@ -645,7 +587,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
     
 }
 
-
+//iteracion de convergencia, si prol es true estoy en serial, si es false es parte paralela
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice,bool prol){
 	double max_error=0;
 

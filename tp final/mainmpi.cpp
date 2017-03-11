@@ -4,12 +4,11 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 
 	for(int n=0;n<nn;n++){
 
-		//cout << "n: "<<n<<endl;
+				//descomentar si quieren guardar tumor temporal
+		//if(n%500==0){
+		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
+		//}
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-
-			//if(n%200==0){
-			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
-			//}
 			MPI_Barrier(MPI_COMM_WORLD);
 			if ((G3D(C,io,jo,ko) < C_mig) && !estoy_en_paralelo){//proliferacion (ESTO ES SERIAL)
 				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C,C_k1,C_k2,true);
