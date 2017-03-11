@@ -9,7 +9,7 @@ void iteracion_temporal(){
 		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 		//}
 
-	if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
+	//if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
 		for(int k=0;k<kk;k++){
 			for(int j=0;j<jj;j++){
 				for(int i=0;i<ii;i++){
@@ -39,7 +39,7 @@ void iteracion_temporal(){
 				} 
 			}  
 		}   
-	}
+	//}
 		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
 
 	}
@@ -96,7 +96,9 @@ int main(){
         printf("Tiempo empleado: %g\n",elapsed);
 
 	printf ("Preprocessing result Matrix\n");
-//	dumpMatrixToVtk(C, "tumor_out");   
+	dumpMatrixToVtk(C, "tumor_out_serial");   
+	dividir(C,64);
+	dumpMatrixToVtk(C, "tumor_out_div");   
 	cout<< "PROCESO TERMINADO"<<endl;
 	return 0;
 	}

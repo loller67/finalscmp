@@ -3,90 +3,69 @@
 void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice){
 
 	for(int n=0;n<nn;n++){
+
 		//cout << "n: "<<n<<endl;
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
 
 			//if(n%200==0){
 			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 			//}
+			MPI_Barrier(MPI_COMM_WORLD);
 			if ((G3D(C,io,jo,ko) < C_mig) && !estoy_en_paralelo){//proliferacion (ESTO ES SERIAL)
-			for(int k=0;k<kk;k++){
-				for(int j=0;j<jj;j++){
-					for(int i=0;i<ii;i++){
-						if (G3D(C_slice,i,j,k) >= 1){
-						}
-						if(G3D(C_slice,i,j,k) >= 1e7){
-							cantidad2=cantidad2+1;
-
-							if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
-								cantidad3=cantidad3+2;
-
-							}else{
-								if(pertenece(cerebelo,G3D(talairach,i,j,k)))
-										cantidad3=cantidad3+2;
-								if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
-										cantidad3=cantidad3+2;
-								if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
-										cantidad3=cantidad3+1;
-								}
-						
-					
-						 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
-								buscar_areas_Broodman(i,j,k,B);
-							}
-		   				}
-					} 
-				}  
-			}
-				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C,C_k1,C_k2);
+				iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C,C_k1,C_k2,true);
 				
 
-		}else{//sector paralelo
-			if(!estoy_en_paralelo){
-				cout <<"sección paralela"<<endl;
-				estoy_en_paralelo=true;
-				MPI_Scatter(&C[0],chunkSize* (ii*jj),MPI_DOUBLE,&C_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
+			}else{//sector paralelo
+				if(!estoy_en_paralelo){
+					cout <<"sección paralela"<<endl;
+					estoy_en_paralelo=true;
+					MPI_Scatter(&C[0],chunkSize* (ii*jj),MPI_DOUBLE,&C_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
 
-				// Paso capas internas a los procesos (arranco de Z1)
-					    
-				screenMessage("Scatering CK2\n");
-				MPI_Scatter(&C_k1[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK1_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
-					    
-				screenMessage("Scatering CK1\n");
-				MPI_Scatter(&C_k2[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK2_slice[0],chunkSize* (ii*jj) ,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    
+					// Paso capas internas a los procesos (arranco de Z1)
+						    
+					screenMessage("Scatering CK2\n");
+					MPI_Scatter(&C_k1[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK1_slice[0],chunkSize * (ii*jj),MPI_DOUBLE,0,MPI_COMM_WORLD);
+						    
+					screenMessage("Scatering CK1\n");
+					MPI_Scatter(&C_k2[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK2_slice[0],chunkSize* (ii*jj) ,MPI_DOUBLE,0,MPI_COMM_WORLD);
+	    
 
 
-   					 MPI_Barrier(MPI_COMM_WORLD);
-			}
-			for(int k=0;k<kk;k++){
-				for(int j=0;j<jj;j++){
-					for(int i=0;i<ii;i++){
-						if (G3D(C_slice,i,j,k) >= 1){
-						}
-						if(G3D(C_slice,i,j,k) >= 1e7){
-							cantidad2=cantidad2+1;
+	   				MPI_Barrier(MPI_COMM_WORLD);
+				}
 
-							if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
-								cantidad3=cantidad3+2;
-
-							}else{
-								if(pertenece(cerebelo,G3D(talairach,i,j,k)))
-										cantidad3=cantidad3+2;
-								if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
-										cantidad3=cantidad3+2;
-								if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
-										cantidad3=cantidad3+1;
-								}
-						
-					
-						 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
-								buscar_areas_Broodman(i,j,k,B);
+				for(int k=0;k<kk;k++){
+					for(int j=0;j<jj;j++){
+						for(int i=0;i<ii;i++){
+							if (G3D(C_slice,i,j,k) >= 1){
+								cantidad1++;
 							}
-		   				}
-					} 
-				}  
-			}
+							if(G3D(C_slice,i,j,k) >= 1e7){
+								cantidad2=cantidad2+1;
+
+								if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
+									cantidad3=cantidad3+2;
+
+								}else{
+									if(pertenece(cerebelo,G3D(talairach,i,j,k)))
+											cantidad3=cantidad3+2;
+									if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
+											cantidad3=cantidad3+2;
+									if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
+											cantidad3=cantidad3+1;
+									}
+						
+
+							 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
+									if (world_rank==0){
+									buscar_areas_Broodman(i,j,k,B);
+									}
+								}
+			   				}
+						} 
+					}  
+				}
+			
 			estoy_en_paralelo=true;
 			
         //screenMessage("Waiting for processes to border exchange...\n");
@@ -95,7 +74,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
         //screenMessage("Starting border exchange...\n");	
         doHaloTransfer(C_slice, world_rank, world_size, workingSize);
         MPI_Barrier(MPI_COMM_WORLD);
-	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
+	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice,false);
 
 	}
 	

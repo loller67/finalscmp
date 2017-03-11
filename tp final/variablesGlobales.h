@@ -467,9 +467,9 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-	if (n%500==0){
-		grabar_matriz(C);
-    }
+	//if (n%500==0){
+	//	grabar_matriz(C);
+    //}
     // Grabar info e informar por pantalla:
     if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;

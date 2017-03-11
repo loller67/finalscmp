@@ -157,6 +157,23 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 
 }
 
+void dividir(VECTOR3D &m, int num){
+
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
+
+				S3D(m,i,j,k,G3D(m,i,j,k)/num);
+
+
+			}
+		}
+
+	}
+
+
+}
+
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	double max=0;

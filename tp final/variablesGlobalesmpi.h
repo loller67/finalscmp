@@ -600,9 +600,9 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-	if (n%500==0){
-		grabar_matriz(C);
-    }
+	//if (n%500==0){
+	//	grabar_matriz(C);
+    //}
     // Grabar info e informar por pantalla:
     if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;
@@ -646,7 +646,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 }
 
 
-void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice){
+void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice,bool prol){
 	double max_error=0;
 
 	if (dia <= 1500){
@@ -657,7 +657,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     int iter=0;
     double error = 1000;
 
-    if (G3D(C,io,jo,ko) < C_mig){
+    if (prol){
     	copyMatrix(C_k2,C);
     }else{
     	copyMatrix(CK2_slice,C_slice);
@@ -682,18 +682,16 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 			error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
 		}
        		iter++;
-	}else{
+	}else{//parte paralela
         copyMatrix(CK1_slice,CK2_slice);
+	double error_local=0;
        //Calcular dominio
 	       for (int k=1;k<chunkSize-1;k++){
 		   for (int j=1;j<jj-1;j++){
 		       for (int i=1;i<ii-1;i++){
-						if (G3D(C_slice,io,jo,ko) < C_mig){ //proliferacion
-		            S3D(M,i,j,k,0);
-				
-						}else{ //proliferacion y migracion
-							S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
-						}
+
+						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
+						
 
 						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
 						S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
@@ -706,14 +704,24 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 					}
 		   }
 	       }
-	  
 	       //Calcular error y actualizar
-	       error = restaMax(CK1_slice,CK2_slice);
+	       for(int r=0; r<world_size;r++){
+			
+		       if (world_rank == r) {
+				error = restaMax(CK1_slice,CK2_slice);
+				if (error_local< error){
+				error_local=error;
+				}
+			}
+			
+		}
+               MPI_Barrier(MPI_COMM_WORLD);
+		error=error_local;
 	       iter++;
 	    }
     }
     // Actualizar malla
-    if (G3D(C,io,jo,ko) < C_mig){
+    if (prol){
     copyMatrix(C,C_k2);
     }else{
     copyMatrix(C_slice,CK2_slice);
@@ -723,6 +731,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 	if (world_rank == 0) {
 	    guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	}
+
 }
 
 
