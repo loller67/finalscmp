@@ -550,7 +550,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 while((iter < max_iter) && (error > max_error)){
 		S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
        //Calcular dominio
-	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+	//if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
 		S3D(M,io,jo,ko,0);
 		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
 		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
@@ -568,7 +568,7 @@ while((iter < max_iter) && (error > max_error)){
 		}
        		iter++;
 
-	}else{//proliferacion y migracion
+	/*}else{//proliferacion y migracion
 
                copyMatrix(C_k1,C_k2);
 	       for (int k=1;k<kk-1;k++){
@@ -593,7 +593,7 @@ while((iter < max_iter) && (error > max_error)){
        //Calcular error y actualizar
        error = restaMax(C_k1,C_k2);
        iter++;
-	}
+	}*/
     }
     // Actualizar malla
 

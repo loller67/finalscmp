@@ -50,7 +50,7 @@ int ko = 85;
 int cantidad1 = 0; //para deteccion de celulas tumorales
 int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
-bool estoy_en_paralelo= false;
+
 
   vector<int> callo({508,509,510,514,515,651,652,657,694,695,711,712,713,714,715});
   vector<int>  tracto_opt({273,359,361,624,633,638,639,641});//8
@@ -138,7 +138,6 @@ int scatterSize = chunkSize - 1;
 int workingSize = chunkSize + 1;
 //FUNCIONES MPI
 
-//funcion que imprime por pantalla
 void screenMessage(const char *fmt, ...) {
     
     int world_rank;
@@ -151,41 +150,34 @@ void screenMessage(const char *fmt, ...) {
     }
 }
 
-
-//funcion que transmite las slices entre los procesos, utiliza sendrecv y no send y recv por separado porque tenia deadlock
 void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSize){
      //printf("[%u] Entering Halo\n", rank);
     
+//MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
+  //        &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 
-
-     if (rank % 2 == 0){
+     if (rank % 2 == 0){//CASO PARES
         //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
-        // SEND Z4(0) <- Z4(1)
+        // SENDRECV Z4(0) <- Z4(1)
         if (rank > 0){
-
-MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
-          &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
-
-
-        if (rank < numProcs - 1){
-MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
-          &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        }
-    }else{
-        if (rank > 0){
-
-            
-	MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,
-                &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        }
-
-
+        // SENDRECV Z4(0) <- Z4(1)
         if (rank < numProcs - 1){
 
+		MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0, &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    }else{// CASO IMPARES
+
+        // SENDRECV Z3(1) <- Z3(0)
+        if (rank > 0){
+	MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        }
+
+        // SENDRECV Z4(0) <- Z4(1)
+        if (rank < numProcs - 1){
 	MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
                 &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -202,7 +194,7 @@ MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, 
 
 //FUNCIONES
 
-//chequea pertenencia de un valor en un vector
+
 bool pertenece(vector<int> v, int val){
 	
 	for(int i=0;i<v.size();i++){
@@ -213,8 +205,6 @@ bool pertenece(vector<int> v, int val){
 	return false;
 }
 
-
-//copia la matriz 2 en matriz 1
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	for(int k=0;k<chunkSize;k++){
 		for(int i=0;i<ii;i++){
@@ -229,7 +219,7 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	}
 
 }
-//calcula el valor maximo de la resta de todas las dimensiones entre m1 y m2
+
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	double max=0;
@@ -299,7 +289,7 @@ for(int i=0;i<ii;i++){
 	
 
 }
-//calcula el tiempo
+
 std::string GetLocalTime() {
     auto now(std::chrono::system_clock::now());
     auto seconds_since_epoch(
@@ -318,7 +308,7 @@ std::string GetLocalTime() {
     return std::string(temp) +
     std::to_string((now.time_since_epoch() - seconds_since_epoch).count());
 }
-//guarda el valor de la matriz en el vtk
+
 void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     cout << "Dumping to VTK..." << endl;
     
@@ -348,7 +338,7 @@ void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     
     fbmc.close();
 }
-//funcion que levanta los valores de los csv
+
 void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int originX, int originY, int originZ, VECTOR3D &difusionMat){
 
     printf ("Reading difussion data file %s, section (%u,%u,%u),(%u,%u,%u)\n", dataFile.c_str(), originX, originY, originZ, originX + tamX, originY+tamY, originZ+tamZ);
@@ -385,7 +375,7 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
     printf ("Difussion data read OK\n");
 //imprimir_matriz(difusionMat);
 }
-//setea los valores de p y D
+
 void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
@@ -436,8 +426,6 @@ for(int k=0;k<kk;k++){
 
 }
 
-
-//setea condiciones iniciales
 void inicializarCondiciones(){
 	
 //Origen del tumor en:
@@ -527,7 +515,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
-
+			if(G3D(mat,i,j,k)!=0)
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -535,16 +523,16 @@ for(int i=0;i<ii;i++){
 
 }
 
-//guarda datos a disco, esto lo hace un solo proceso para evitar problemas
+
 void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
 	//para ver el dia actual
 	time_t tiempo = time(0);
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-	//if (n%500==0){
-	//	grabar_matriz(C);
-    //}
+//	if (n%500==0){
+//		grabar_matriz(C);
+  //  }
     // Grabar info e informar por pantalla:
     if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;
@@ -555,24 +543,24 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
   	
     if (n % 10 ==0){
 
-		printf("%s\n",output);
-		cout<<"iteracion: "<< dia <<endl;
-		info<< output;
-		info<<" dia: "<< dia/10<<" ";
-		info<< " error: " << error <<endl;
+        printf("%s\n",output);
+	cout<<"dia: "<< dia <<endl;
+	info<< output;
+	info<<" dia: "<< dia/10<<" ";
+	info<< " error: " << error <<endl;
 	
-	
-
-		if (migracion == 1){
-			info<<"En migración \n"; 
-		}
-		if (cantidad2 >= diagnostico){
-			info<<"diagnosticado"<<endl; 
-		}
-		if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
-			info<<"muerte del paciente"<<endl; 
-		}
 	}
+
+        if (migracion == 1){
+		info<<"En migración \n"; 
+        }
+        if (cantidad2 >= diagnostico){
+		info<<"diagnosticado"<<endl; 
+        }
+        if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
+		info<<"muerte del paciente"<<endl; 
+        }
+
         for (int a =0;a<47;a++){
             if (B[a]>=1&& B_T[a]>0){ //si esa area de Brodmann no es nula
 		
@@ -587,53 +575,32 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
     
 }
 
-//iteracion de convergencia, si prol es true estoy en serial, si es false es parte paralela
-void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice,bool prol){
+
+void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice){
 	double max_error=0;
 
 	if (dia <= 1500){
-        max_error = 1;
+	max_error = 1;
 	}else{
-        max_error = 10;
-    }
-    int iter=0;
-    double error = 1000;
+	max_error = 10;
+	}
+	int iter=0;
+	double error = 1000;
 
-    if (prol){
-    	copyMatrix(C_k2,C);
-    }else{
-    	copyMatrix(CK2_slice,C_slice);
-    }
+	copyMatrix(CK2_slice,C_slice);
 
-    while((iter < max_iter) && (error > max_error)){
-	S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
-	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion (ESTO ES SERIAL)
-		S3D(M,io,jo,ko,0);
-		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
-		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
-		if (G3D(C_k2,io,jo,ko) > C_max){
-			S3D(C_k2,io,jo,ko, C_max);
-		}
-		if (G3D(C_k2,io,jo,ko) < 0.00001){
-			S3D(C_k2,io,jo,ko,0);
-		}
-		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
-			error=G3D(C_k1,io,jo,ko)-G3D(C_k2,io,jo,ko);
-
-		}else{
-			error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
-		}
-       		iter++;
-	}else{//parte paralela
-        copyMatrix(CK1_slice,CK2_slice);
-	double error_local=0;
+	while((iter < max_iter) && (error > max_error)){
+		copyMatrix(CK1_slice,CK2_slice);
        //Calcular dominio
-	       for (int k=1;k<chunkSize-1;k++){
-		   for (int j=1;j<jj-1;j++){
-		       for (int i=1;i<ii-1;i++){
-
-						S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
-						
+		for (int k=1;k<chunkSize-1;k++){
+			for (int j=1;j<jj-1;j++){
+				for (int i=1;i<ii-1;i++){
+					//if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+						S3D(M,i,j,k,0);
+				
+					//	}else{ //proliferacion y migracion
+					//		S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
+					//	}
 
 						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
 						S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
@@ -646,34 +613,30 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 					}
 		   }
 	       }
+	  
 	       //Calcular error y actualizar
-	       for(int r=0; r<world_size;r++){
-			
-		       if (world_rank == r) {
-				error = restaMax(CK1_slice,CK2_slice);
-				if (error_local< error){
-				error_local=error;
-				}
-			}
-			
+		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+			error=-1*(G3D(CK1_slice,io,jo,ko)-G3D(CK2_slice,io,jo,ko));
+
+		}else{
+			error=-1*(G3D(CK2_slice,io,jo,ko)-G3D(CK1_slice,io,jo,ko));
 		}
-               MPI_Barrier(MPI_COMM_WORLD);
-		error=error_local;
-	       iter++;
+		iter++;
 	    }
-    }
+    
     // Actualizar malla
-    if (prol){
-    copyMatrix(C,C_k2);
-    }else{
-    copyMatrix(C_slice,CK2_slice);
-    }
 
+	copyMatrix(C_slice,CK2_slice);
+	if((ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1) || (world_rank==0 &&ko>=chunkSize*world_rank) ){
+		//error = restaMax(C,CK2_slice);
+		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+			error=-1*(G3D(CK1_slice,io,jo,ko)-G3D(CK2_slice,io,jo,ko));
 
-	if (world_rank == 0) {
-	    guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
+		}else{
+			error=-1*(G3D(CK2_slice,io,jo,ko)-G3D(CK1_slice,io,jo,ko));
+		}
+		guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	}
-
 }
 
 
