@@ -16,14 +16,12 @@
 #include <vector>
 #include <time.h>
 #include <string.h>
-#include <mpi.h>
-#include <stdarg.h>
 
 #define G3D(V,X,Y,Z)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-
+#define threads 1
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
@@ -50,7 +48,6 @@ int ko = 85;
 int cantidad1 = 0; //para deteccion de celulas tumorales
 int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
-
 
   vector<int> callo({508,509,510,514,515,651,652,657,694,695,711,712,713,714,715});
   vector<int>  tracto_opt({273,359,361,624,633,638,639,641});//8
@@ -125,76 +122,15 @@ VECTOR3D D = CREATEM3D(ii,jj,kk);
 VECTOR3D C = CREATEM3D(ii,jj,kk);
 VECTOR3D P_optimizado = CREATEM3D(ii,jj,kk);
 VECTOR3D M_optimizado = CREATEM3D(ii,jj,kk);
-VECTOR3D P = CREATEM3D(ii,jj,kk);
-VECTOR3D M = CREATEM3D(ii,jj,kk);
 VECTOR3D C_k2 = CREATEM3D(ii,jj,kk);
 VECTOR3D C_k1 = CREATEM3D(ii,jj,kk);
-//Variables MPI
+VECTOR3D P = CREATEM3D(ii,jj,kk);
 
-int world_rank;
-int world_size;
-int chunkSize = 1;
-int scatterSize = chunkSize - 1;
-int workingSize = chunkSize + 1;
-//FUNCIONES MPI
-
-void screenMessage(const char *fmt, ...) {
-    
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    if (world_rank == 0){
-        va_list args;
-        va_start(args, fmt);
-        vprintf(fmt, args);
-        va_end(args);
-    }
-}
-
-void doHaloTransfer(VECTOR3D &slice, int rank, int numProcs, int workingSliceSize){
-     //printf("[%u] Entering Halo\n", rank);
-    
-//MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
-  //        &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-
-     if (rank % 2 == 0){//CASO PARES
-        //Z0-Z1-Z2-Z3-Z4  Z3-Z4-Z5-Z6-Z7  Z6-Z7-Z8-Z9-ZA  Z9-ZA-ZB-ZC ....
-        // SENDRECV Z4(0) <- Z4(1)
-        if (rank > 0){
-		MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0, &slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-        // SENDRECV Z4(0) <- Z4(1)
-        if (rank < numProcs - 1){
-
-		MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0, &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }
-    }else{// CASO IMPARES
-
-        // SENDRECV Z3(1) <- Z3(0)
-        if (rank > 0){
-	MPI_Sendrecv(&slice[ii  * jj], ii  * jj, MPI_DOUBLE, rank - 1, 0,&slice[0], ii  * jj, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        }
-
-        // SENDRECV Z4(0) <- Z4(1)
-        if (rank < numProcs - 1){
-	MPI_Sendrecv(&slice[(ii  * jj) * (workingSliceSize - 2)], ii  * jj, MPI_DOUBLE, rank + 1, 0,
-                &slice[(ii  * jj) * (workingSliceSize-1)], ii  * jj, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        }
-
-    }
-     //printf("[%u] Exit Halo\n", rank);
-    MPI_Barrier(MPI_COMM_WORLD);
-
-}
-
-
-
+VECTOR3D M = CREATEM3D(ii,jj,kk);
 
 //FUNCIONES
 
-
+//Chequea pertenencia del valor en el vector
 bool pertenece(vector<int> v, int val){
 	
 	for(int i=0;i<v.size();i++){
@@ -204,11 +140,12 @@ bool pertenece(vector<int> v, int val){
 		}
 	return false;
 }
-
+//guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
-	for(int k=0;k<chunkSize;k++){
-		for(int i=0;i<ii;i++){
-			for(int j=0;j<jj;j++){
+
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
 
 				S3D(mat1,i,j,k,G3D(mat2,i,j,k));
 
@@ -219,16 +156,33 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 	}
 
 }
+//funcion para normalizar los valores de una matriz
+void dividir(VECTOR3D &m, int num){
 
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
+
+				S3D(m,i,j,k,G3D(m,i,j,k)/num);
+
+
+			}
+		}
+
+	}
+
+
+}
+//calcula el valor de la resta maxima de todas las dimensiones de las dos matrices
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 
 	double max=0;
 	double m1=0;
 	double m2=0;
 	double abs=0;
-	for(int k=0;k<chunkSize;k++){
-		for(int i=0;i<ii;i++){
-			for(int j=0;j<jj;j++){
+	for(int i=0;i<ii;i++){
+		for(int j=0;j<jj;j++){
+			for(int k=0;k<kk;k++){
 
 				m2=G3D(mat2,i,j,k);
 				m1=G3D(mat1,i,j,k);
@@ -270,7 +224,7 @@ void cargar_vectores(){
 	}
 
 }
-
+// imprime valores de la matriz, usado para debuggear
 void imprimir_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 
@@ -278,7 +232,7 @@ for(int i=0;i<ii;i++){
 
 		for(int k=0;k<kk;k++){
 
-			if(!G3D(mat,i,j,k)==0)
+
 			cout<<"valor: "<<G3D(mat,i,j,k)<<endl;
 
 		}
@@ -289,7 +243,7 @@ for(int i=0;i<ii;i++){
 	
 
 }
-
+//funcion para obtener la fecha
 std::string GetLocalTime() {
     auto now(std::chrono::system_clock::now());
     auto seconds_since_epoch(
@@ -309,6 +263,8 @@ std::string GetLocalTime() {
     std::to_string((now.time_since_epoch() - seconds_since_epoch).count());
 }
 
+
+// guarda los valores de la matriz en el archivo .vtk
 void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     cout << "Dumping to VTK..." << endl;
     
@@ -338,7 +294,7 @@ void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
     
     fbmc.close();
 }
-
+//funcion para levantar las matrices de disco
 void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int originX, int originY, int originZ, VECTOR3D &difusionMat){
 
     printf ("Reading difussion data file %s, section (%u,%u,%u),(%u,%u,%u)\n", dataFile.c_str(), originX, originY, originZ, originX + tamX, originY+tamY, originZ+tamZ);
@@ -376,6 +332,8 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
 //imprimir_matriz(difusionMat);
 }
 
+
+//Funcion que inicializa matriz D y p
 void TransformDifusion(){
 	
 for(int k=0;k<kk;k++){
@@ -426,6 +384,8 @@ for(int k=0;k<kk;k++){
 
 }
 
+
+//funcion que setea condiciones iniciales
 void inicializarCondiciones(){
 	
 //Origen del tumor en:
@@ -515,7 +475,7 @@ void grabar_matriz(VECTOR3D &mat){
 for(int i=0;i<ii;i++){
 	for(int j=0;j<jj;j++){
 		for(int k=0;k<kk;k++){
-			if(G3D(mat,i,j,k)!=0)
+			//if(G3D(mat,i,j,k)!=0)
 			datos<<G3D(mat,i,j,k)<<endl;
 }
 }
@@ -523,16 +483,16 @@ for(int i=0;i<ii;i++){
 
 }
 
-
+//funcion para guardar datos en disco
 void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){
 	//para ver el dia actual
 	time_t tiempo = time(0);
         struct tm *tlocal = localtime(&tiempo);
         char output[128];
         strftime(output,128,"%d/%m/%y %H:%M:%S",tlocal);
-//	if (n%500==0){
-//		grabar_matriz(C);
-  //  }
+	if (n%500==0){
+		grabar_matriz(C);
+    }
     // Grabar info e informar por pantalla:
     if (G3D(C,io,jo,ko) > C_mig && migracion == 0){
             cout<< "comienza migracion"<<endl;
@@ -540,26 +500,27 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 		}
     if(error > 10)
             cout<< "error = " << error << endl;
-  	
-    if (n % 10 ==0){
+   if (n % 10 ==0){
 
-        printf("%s\n",output);
-	cout<<"dia: "<< dia <<endl;
-	info<< output;
-	info<<" dia: "<< dia/10<<" ";
-	info<< " error: " << error <<endl;
+		printf("%s\n",output);
+		cout<<"iteracion: "<< dia <<endl;
+		info<< output;
+		info<<" dia: "<< dia/10<<" ";
+		info<< " error: " << error <<endl;
 	
-	}
+	
 
-        if (migracion == 1){
-		info<<"En migración \n"; 
-        }
-        if (cantidad2 >= diagnostico){
-		info<<"diagnosticado"<<endl; 
-        }
-        if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
-		info<<"muerte del paciente"<<endl; 
-        }
+		if (migracion == 1){
+			info<<"En migración \n"; 
+		}
+		if (cantidad2 >= diagnostico){
+			info<<"diagnosticado"<<endl; 
+		}
+		if (cantidad3 >= 179594){ //Para area letal (esfera de 70 mm de diametro) ponderada por areas vitales
+			info<<"muerte del paciente"<<endl; 
+		}
+
+	}
 
         for (int a =0;a<47;a++){
             if (B[a]>=1&& B_T[a]>0){ //si esa area de Brodmann no es nula
@@ -576,72 +537,73 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 }
 
 
-void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice){
+void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T){// PARTES COMENTADAS HACER
 	double max_error=0;
-	int ko_nuevo= ko-chunkSize-1;
-	if(world_rank<=2 ){
-		int ko_nuevo= ko;
-	}
+	int i,j,k;
 	if (dia <= 1500){
-	max_error = 1;
+        max_error = 1;
 	}else{
-	max_error = 10;
-	}
-	int iter=0;
-	double error = 1000;
+        max_error = 10;
+    }
+    int iter=0;
+    double error = 1000;
+    copyMatrix(C_k2,C);
 
-	copyMatrix(CK2_slice,C_slice);
-
-	while((iter < max_iter) && (error > max_error)){
-		copyMatrix(CK1_slice,CK2_slice);
+while((iter < max_iter) && (error > max_error)){
+		S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
        //Calcular dominio
-		for (int k=1;k<chunkSize-1;k++){
-			for (int j=1;j<jj-1;j++){
-				for (int i=1;i<ii-1;i++){
-					//if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
-						S3D(M,i,j,k,0);
-				
-					//	}else{ //proliferacion y migracion
-					//		S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
-					//	}
+	if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+		S3D(M,io,jo,ko,0);
+		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
+		S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
+		if (G3D(C_k2,io,jo,ko) > C_max){
+			S3D(C_k2,io,jo,ko, C_max);
+		}
+		if (G3D(C_k2,io,jo,ko) < 0.00001){
+			S3D(C_k2,io,jo,ko,0);
+		}
+		if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+			error=G3D(C_k1,io,jo,ko)-G3D(C_k2,io,jo,ko);
 
-						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
-						S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
-						if (G3D(CK2_slice,i,j,k) > C_max){
-							S3D(CK2_slice,i,j,k, C_max);
+		}else{
+			error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
+		}
+       		iter++;
+	}else{//proliferacion y migracion
+
+               copyMatrix(C_k1,C_k2);
+#pragma omp parallel for collapse(3)  schedule(static) num_threads(threads)  
+	       for (int k=1;k<kk-1;k++){
+		   for (int j=1;j<jj-1;j++){
+		       for (int i=1;i<ii-1;i++){
+
+			S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
+						
+
+						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
+						S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
+						if (G3D(C_k2,i,j,k) > C_max){
+							S3D(C_k2,i,j,k, C_max);
 						}
-						if (G3D(CK2_slice,i,j,k) < 0.00001){
-							S3D(CK2_slice,i,j,k,0);
+						if (G3D(C_k2,i,j,k) < 0.00001){
+							S3D(C_k2,i,j,k,0);
 						}
-					}
+			}
 		   }
 	       }
-	  
-	       //Calcular error y actualizar
-		if(G3D(C_k1,io,jo,ko_nuevo)>=G3D(C_k2,io,jo,ko_nuevo)){// calculo valor absoluto del error
-			error=-1*(G3D(CK1_slice,io,jo,ko_nuevo)-G3D(CK2_slice,io,jo,ko_nuevo));
-
-		}else{
-			error=-1*(G3D(CK2_slice,io,jo,ko_nuevo)-G3D(CK1_slice,io,jo,ko_nuevo));
-		}
-		iter++;
-	    }
-    
-    // Actualizar malla
-
-	copyMatrix(C_slice,CK2_slice);
-	if((world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
-		cout<<world_rank<<endl;
-		//error = restaMax(C,CK2_slice);
-		if(G3D(C_k1,io,jo,ko_nuevo)>=G3D(C_k2,io,jo,ko_nuevo)){// calculo valor absoluto del error
-			error=-1*(G3D(CK1_slice,io,jo,ko_nuevo)-G3D(CK2_slice,io,jo,ko_nuevo));
-
-		}else{
-			error=-1*(G3D(CK2_slice,io,jo,ko_nuevo)-G3D(CK1_slice,io,jo,ko_nuevo));
-		}
-		guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
+  
+       //Calcular error y actualizar
+       error = restaMax(C_k1,C_k2);
+       iter++;
 	}
+    }
+    // Actualizar malla
+    
+    copyMatrix(C,C_k2);
+
+    guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 }
+
 
 
 #endif
