@@ -206,22 +206,17 @@ bool pertenece(vector<int> v, int val){
 }
 
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
-
-
-
-	for(int k=0;k<kk;k++){
+	for(int k=0;k<chunkSize;k++){
 		for(int i=0;i<ii;i++){
 			for(int j=0;j<jj;j++){
 
 				S3D(mat1,i,j,k,G3D(mat2,i,j,k));
 
 
-
 			}
 		}
 
 	}
-
 
 }
 
@@ -444,7 +439,9 @@ for(int k=0;k<kk;k++){
        }
 	}
 }	  
-     	S3D(C,io,jo,ko,1);
+     
+
+S3D(C,io,jo,ko,1);
 
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -579,11 +576,11 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 }
 
 
-void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C,VECTOR3D &C_k1,VECTOR3D &C_k2){
+void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slice){
 	double max_error=0;
 	int ko_nuevo= ko-chunkSize-1;
-	if(world_size<=2 ){
-		ko_nuevo= ko;
+	if(world_rank<=2 ){
+		int ko_nuevo= ko;
 	}
 	if (dia <= 1500){
 	max_error = 1;
@@ -592,41 +589,58 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 	}
 	int iter=0;
 	double error = 1000;
-	S3D(C_k2,io,jo,ko_nuevo,G3D(C,io,jo,ko_nuevo));
+
+	copyMatrix(CK2_slice,C_slice);
 
 	while((iter < max_iter) && (error > max_error)){
-		if( (world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
-		S3D(C_k1,io,jo,ko_nuevo,G3D(C_k2,io,jo,ko_nuevo));
+		copyMatrix(CK1_slice,CK2_slice);
        //Calcular dominio
-	//if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
-		S3D(M,io,jo,ko,0);
-		S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko_nuevo) * (1 - G3D(C_k1,io,jo,ko_nuevo) / C_max));
-		S3D(C_k2,io,jo,ko_nuevo, G3D(C,io,jo,ko_nuevo) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
-		if (G3D(C_k2,io,jo,ko_nuevo) > C_max){
-			S3D(C_k2,io,jo,ko_nuevo, C_max);
-		}
-		if (G3D(C_k2,io,jo,ko_nuevo) < 0.00001){
-			S3D(C_k2,io,jo,ko_nuevo,0);
-		}
+		for (int k=1;k<chunkSize-1;k++){
+			for (int j=1;j<jj-1;j++){
+				for (int i=1;i<ii-1;i++){
+					//if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+						S3D(M,i,j,k,0);
+				
+					//	}else{ //proliferacion y migracion
+					//		S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(CK1_slice,i+1,j,k)+G3D(CK1_slice,i-1,j,k)+G3D(CK1_slice,i,j+1,k)+G3D(CK1_slice,i,j-1,k)+G3D(CK1_slice,i,j,k+1)+G3D(CK1_slice,i,j,k-1)-6*G3D(CK1_slice,i,j,k)));
+					//	}
+
+						S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(CK1_slice,i,j,k) * (1 - G3D(CK1_slice,i,j,k) / C_max));
+						S3D(CK2_slice,i,j,k, G3D(C_slice,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
+						if (G3D(CK2_slice,i,j,k) > C_max){
+							S3D(CK2_slice,i,j,k, C_max);
+						}
+						if (G3D(CK2_slice,i,j,k) < 0.00001){
+							S3D(CK2_slice,i,j,k,0);
+						}
+					}
+		   }
+	       }
+	  
+	       //Calcular error y actualizar
 		if(G3D(C_k1,io,jo,ko_nuevo)>=G3D(C_k2,io,jo,ko_nuevo)){// calculo valor absoluto del error
-			error=G3D(C_k1,io,jo,ko_nuevo)-G3D(C_k2,io,jo,ko_nuevo);
+			error=-1*(G3D(CK1_slice,io,jo,ko_nuevo)-G3D(CK2_slice,io,jo,ko_nuevo));
 
 		}else{
-			error=G3D(C_k2,io,jo,ko_nuevo)-G3D(C_k1,io,jo,ko_nuevo);
+			error=-1*(G3D(CK2_slice,io,jo,ko_nuevo)-G3D(CK1_slice,io,jo,ko_nuevo));
 		}
-       		iter++;
-		}
-    	}
+		iter++;
+	    }
+    
     // Actualizar malla
-	S3D(C_k1,io,jo,ko_nuevo,G3D(C_k2,io,jo,ko_nuevo));
-	copyMatrix(C,C_k2);
-	if( (world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
+
+	copyMatrix(C_slice,CK2_slice);
+	if((world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
+		cout<<world_rank<<endl;
 		//error = restaMax(C,CK2_slice);
+		if(G3D(C_k1,io,jo,ko_nuevo)>=G3D(C_k2,io,jo,ko_nuevo)){// calculo valor absoluto del error
+			error=-1*(G3D(CK1_slice,io,jo,ko_nuevo)-G3D(CK2_slice,io,jo,ko_nuevo));
 
+		}else{
+			error=-1*(G3D(CK2_slice,io,jo,ko_nuevo)-G3D(CK1_slice,io,jo,ko_nuevo));
+		}
 		guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
-	
 	}
-
 }
 
 

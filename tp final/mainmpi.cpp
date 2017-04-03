@@ -10,7 +10,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 			//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 			//}
 
-			if ((G3D(C,io,jo,ko) < C_mig) ){
+			/*if ((G3D(C,io,jo,ko) < C_mig) ){
 			for(int k=0;k<kk;k++){
 				for(int j=0;j<jj;j++){
 					for(int i=0;i<ii;i++){
@@ -38,20 +38,22 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 		   				}
 					} 
 				}  
-			}		
+			}*/	
 			
         //screenMessage("Waiting for processes to border exchange...\n");
         MPI_Barrier(MPI_COMM_WORLD);
         // Intercambio de bordes Cn entre procesos vecinos
-        //screenMessage("Starting border exchange...\n");	
-        doHaloTransfer(C_slice, world_rank, world_size, workingSize);
+        //screenMessage("Starting border exchange...\n");
+        	
+        //doHaloTransfer(C_slice, world_rank, world_size, workingSize);
+        
         MPI_Barrier(MPI_COMM_WORLD);
 		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
 
 	}
 	
 
-}
+
 }
 
 int main(){
@@ -60,7 +62,7 @@ int main(){
       // Find out rank, size
       MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
- if (world_rank == 0) {
+ //if (world_rank == 0) {
 	
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
@@ -75,9 +77,9 @@ int main(){
         //dumpMatrixToVtk(D, "matriz D");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-   }
    	info.open("info.txt");
 	datos.open("datos.txt");
+//}
     MPI_Barrier(MPI_COMM_WORLD);
 
     chunkSize = (kk / world_size) ;
@@ -101,10 +103,33 @@ int main(){
     
     screenMessage("Scatering CK1\n");
     MPI_Scatter(&C_k2[0],chunkSize* (ii*jj),MPI_DOUBLE,&CK2_slice[0],chunkSize* (ii*jj) ,MPI_DOUBLE,0,MPI_COMM_WORLD);
-    
+ /*  
+if((world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
+		for(int k=0;k<chunkSize;k++){
+		for(int i=0;i<ii;i++){
+			for(int j=0;j<jj;j++){
 
+				S3D(C_slice,i,j,k,G3D(C,i,j,k));
+
+			}
+		}
+
+	}*/
+	if(world_size>2){
+	S3D(C_slice,io,jo,ko,1);
+
+	S3D(C_slice,io,jo,ko-chunkSize-1,1);
+	}
 
     MPI_Barrier(MPI_COMM_WORLD);
+   
+   //cout<<G3D(C_slice,io,jo,ko-chunkSize-1)<<"rank " << world_rank <<endl;
+    	TransformDifusion();//inicializa valores de la matriz
+        //dumpMatrixToVtk(D, "matriz D");
+	printf ("Preprocessing initial brain Matrix\n");
+	inicializarCondiciones();
+
+
 //A PARTIR DE ACA SE CUENTA EL TIEMPO, ESTO SE PUEDE MODIFICAR PARA QUE SE CUENTE EN OTRO LUGAR
 	double t1,t2,elapsed;
     	struct timeval tp;
@@ -122,6 +147,7 @@ int main(){
 
 
 	printf ("Ejecutando iteracion temporal\n");
+	
 	iteracion_temporal(C_slice,CK1_slice,CK2_slice);
 
 	info.close();
