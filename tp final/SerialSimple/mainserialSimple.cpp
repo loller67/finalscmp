@@ -9,7 +9,7 @@ void iteracion_temporal(){
 		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
 		//}
 		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-	if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
+	/*if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
 		for(int k=0;k<kk;k++){
 			for(int j=0;j<jj;j++){
 				for(int i=0;i<ii;i++){
@@ -39,7 +39,7 @@ void iteracion_temporal(){
 				} 
 			}  
 		}   
-	}
+	}*/
 		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
 
 	}
