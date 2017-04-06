@@ -510,7 +510,7 @@ if(pertenece(v47,G3D(talairach,i,j,k)))                              B[47]=B[47]
 							
 	
 	
-	}
+}
 
 void grabar_matriz(VECTOR3D &mat){
 //imprime en datos en algun orden la matriz
@@ -619,7 +619,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
     // Actualizar malla
 	copyMatrix(C,C_k2);
 	if( (world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
-		//error = restaMax(C,CK2_slice);
+		//error = restaMax(C_k1,C_k2);
 		guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	
 	}
