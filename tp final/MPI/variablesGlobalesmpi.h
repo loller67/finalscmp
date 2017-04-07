@@ -547,7 +547,7 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
     if (n % 10 ==0){
 
         printf("%s\n",output);
-	cout<<"dia: "<< dia <<endl;
+	cout<<"iteracion: "<< dia <<endl;
 	info<< output;
 	info<<" dia: "<< dia/10<<" ";
 	info<< " error: " << error <<endl;
@@ -592,7 +592,7 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 	copyMatrix(C_k2,C);
 	while((iter < max_iter) && (error > max_error)){
 		copyMatrix(C_k1,C_k2);
-		for (int k=1;k<chunkSize;k++){
+		for (int k=1;k<chunkSize+1;k++){
 			for (int j=1;j<jj-1;j++){
 				for (int i=1;i<ii-1;i++){
 
