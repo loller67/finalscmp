@@ -29,6 +29,7 @@ using namespace std;
 //Variables globales porque se me hace mas comodo :B
 
 ofstream info;
+ofstream aux;
 ofstream datos;
 double dt = 0.1;//dias
 double h = 1;//mm, malla de 181x217x181 mm (18x22x18 cm)
@@ -590,18 +591,16 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 
 
 	copyMatrix(C_k2,C);
-	while((iter < max_iter) && (error > max_error)){
+	//while((iter < max_iter) && (error > max_error)){
 		copyMatrix(C_k1,C_k2);
 		for (int k=1;k<chunkSize+1;k++){
 			for (int j=1;j<jj-1;j++){
 				for (int i=1;i<ii-1;i++){
 
 					//S3D(M,i,j,k,0);
-					S3D(M,i,j,k, G3D(M_optimizado,i,j,k) * (G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
-						
+					S3D(M,i,j,k,(G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k)));
 
-					S3D(P,i,j,k, G3D(P_optimizado,i,j,k) * G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max));
-					S3D(C_k2,i,j,k, G3D(C,i,j,k) + G3D(P,i,j,k) + G3D(M,i,j,k));
+					S3D(C_k2,i,j,k, G3D(M,i,j,k));
 					if (G3D(C_k2,i,j,k) > C_max){
 						S3D(C_k2,i,j,k, C_max);
 					}
@@ -615,14 +614,18 @@ void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,v
 		error=restaMax(C_k1,C_k2);
 		iter++;
 
-	}
+	//}
     // Actualizar malla
 	copyMatrix(C,C_k2);
-	if( (world_size<=2 && world_rank==0) || ko>=chunkSize*world_rank && ko<=chunkSize*(world_rank+1)-1 ){
+	if( world_rank==0){
 		//error = restaMax(C_k1,C_k2);
 		guardar_datos(n,error,cantidad1,cantidad2,cantidad3,B,B_R, B_T);
 	
 	}
+
+
+
+
 
 }
 

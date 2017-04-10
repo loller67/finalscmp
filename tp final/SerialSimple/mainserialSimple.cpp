@@ -4,43 +4,46 @@ void iteracion_temporal(){
 
 	for(int n=0;n<nn;n++){
 
-		//descomentar si quieren vtk del tumor temporal
-		//if(n%500==0){
-		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
-		//}
-		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-	/*if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
-		for(int k=0;k<kk;k++){
-			for(int j=0;j<jj;j++){
-				for(int i=0;i<ii;i++){
-					if (G3D(C,i,j,k) >= 1){
-						cantidad1++;
-					}
-					if(G3D(C,i,j,k) >= 1e7){
-						cantidad2=cantidad2+1;
+	double max_error=0;
+	int i,j,k;
+	if (dia <= 1500){
+        max_error = 1;
+	}else{
+        max_error = 10;
+    }
+    int iter=0;
+    double error = 1000;
+    double p_aux;
+    double d_aux;
+    copyMatrix(C_k2,C);
+               copyMatrix(C_k1,C_k2);
+	       for (int k=1;k<kk-1;k++){
+		   for (int j=1;j<jj-1;j++){
+		       for (int i=1;i<ii-1;i++){
+				d_aux=d*(G3D(C_k1,i+1,j,k)+G3D(C_k1,i-1,j,k)+G3D(C_k1,i,j+1,k)+G3D(C_k1,i,j-1,k)+G3D(C_k1,i,j,k+1)+G3D(C_k1,i,j,k-1)-6*G3D(C_k1,i,j,k));
+				p_aux=p* G3D(C_k1,i,j,k) * (1 - G3D(C_k1,i,j,k) / C_max);		
 
-						if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
-							cantidad3=cantidad3+2;
 
-						}else{
-							if(pertenece(cerebelo,G3D(talairach,i,j,k)))
-									cantidad3=cantidad3+2;
-							if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
-									cantidad3=cantidad3+2;
-							if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
-									cantidad3=cantidad3+1;
-							}
-						
-					
-					 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
-							buscar_areas_Broodman(i,j,k,B);
-						}
-	   				}
-				} 
-			}  
-		}   
-	}*/
-		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
+				S3D(C_k2,i,j,k, G3D(C,i,j,k) +p_aux+d_aux);
+				if (G3D(C_k2,i,j,k) > C_max){
+					S3D(C_k2,i,j,k, C_max);
+				}
+				if (G3D(C_k2,i,j,k) < 0.00001){
+					S3D(C_k2,i,j,k,0);
+				}
+			}
+		   }
+	       }
+  
+       //Calcular error y actualizar
+       error = restaMax(C_k1,C_k2);
+       iter++;
+	
+   // }
+    // Actualizar malla
+
+    copyMatrix(C,C_k2);
+    guardar_datos(n,error);
 
 	}
 	
@@ -50,21 +53,6 @@ void iteracion_temporal(){
 
 int main(){
 	
-	
-
-	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
-	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
-	printf ("Preprocessing difusion Matrix\n");
-	//dumpMatrixToVtk(cerebro, "cerebro difusion");
-	printf ("Preprocessing talairach Matrix\n");
-        //dumpMatrixToVtk(talairach, "talairach");
-
-
-
-
-    	printf ("Difusion\n");
-	TransformDifusion();//inicializa valores de la matriz
-        //dumpMatrixToVtk(D, "matriz D");
 	info.open("info.txt");
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");

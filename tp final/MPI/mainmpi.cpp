@@ -79,6 +79,8 @@ int main(){
 	inicializarCondiciones();
    	info.open("info.txt");
 	datos.open("datos.txt");
+	aux.open("aux.txt");
+
 //}
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -151,10 +153,11 @@ int main(){
 	screenMessage("End of data gathering\n");
 
         if (world_rank == 0){
-	//fin toma tiempos
+		//fin toma tiempos
 		rtn=gettimeofday(&tp, NULL);
 		t2=(double)tp.tv_sec+(1.e-6)*tp.tv_usec;
 		elapsed=t2-t1;
+		
 		printf("Tiempo empleado: %g\n",elapsed);
 
 		printf ("Preprocessing result Matrix\n");
