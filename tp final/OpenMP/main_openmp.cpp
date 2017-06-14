@@ -1,48 +1,88 @@
 #include "variablesGlobalesopenmp.h"
 //DEJO ITERACION TEMPORAL ACA PARA NO HACER TANTO QUILOMBO EN EL .h
 void iteracion_temporal(){
-
+	int i,j,k;
+	int plus_i,plus_j,plus_k,minus_i,minus_j,minus_k,m,p,m_ant,c,p_nuevo,c_ant;
 	for(int n=0;n<nn;n++){
+		if(n %100==0){
+			cout<<n<<endl;
+		}
+		double max_error=0;
+		if (dia <= 1500){
+			max_error = 1;
+		}else{
+			max_error = 10;
+		}
+		int iter=0;
+		double error = 1000;
+		copyMatrix(C_k2,C);
 
-		//descomentar si quieren guardar tumor temporal
-		//if(n%500==0){
-		//	dumpMatrixToVtk(C, "tumor_" + to_string(n));   
-		//}
-		//Calculo del volumen tumoral y chequeo de areas de Brodmann
-	if (!(G3D(C,io,jo,ko) < C_mig)){//si no estoy en migracion
-		for(int k=0;k<kk;k++){
-			for(int j=0;j<jj;j++){
-				for(int i=0;i<ii;i++){
-					if (G3D(C,i,j,k) >= 1){
-						cantidad1++;
+		while((iter < max_iter) && (error > max_error)){
+			S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
+		       //Calcular dominio
+			if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
+				S3D(M,io,jo,ko,0);
+				S3D(P,io,jo,ko, G3D(P_optimizado,io,jo,ko) * G3D(C_k1,io,jo,ko) * (1 - G3D(C_k1,io,jo,ko) / C_max));
+				S3D(C_k2,io,jo,ko, G3D(C,io,jo,ko) + G3D(P,io,jo,ko) + G3D(M,io,jo,ko));
+				if (G3D(C_k2,io,jo,ko) > C_max){
+					S3D(C_k2,io,jo,ko, C_max);
+				}
+				if (G3D(C_k2,io,jo,ko) < 0.00001){
+					S3D(C_k2,io,jo,ko,0);
+				}
+				if(G3D(C_k1,io,jo,ko)>=G3D(C_k2,io,jo,ko)){// calculo valor absoluto del error
+					error=G3D(C_k1,io,jo,ko)-G3D(C_k2,io,jo,ko);
+
+				}else{
+					error=G3D(C_k2,io,jo,ko)-G3D(C_k1,io,jo,ko);
+				}
+		       		iter++;
+			}else{//proliferacion y migracion
+
+			       copyMatrix(C_k1,C_k2);
+		#pragma omp parallel for collapse(3)  schedule(static) private(plus_i,plus_j,plus_k,minus_i,minus_j,minus_k,m,p,m_ant,c,p_nuevo) num_threads(threads)  
+			       for (k=1;k<kk-1;k++){
+				   for (j=1;j<jj-1;j++){
+				       for (i=1;i<ii-1;i++){
+
+						m_ant=G3D(M_optimizado,i,j,k);
+						plus_i= G3D(C_k1,i+1,j,k);
+						minus_i=G3D(C_k1,i-1,j,k);
+						plus_j=G3D(C_k1,i,j+1,k);
+						minus_j=G3D(C_k1,i,j-1,k);
+						plus_k=G3D(C_k1,i,j,k+1);
+						minus_k=G3D(C_k1,i,j,k-1);
+						c=G3D(C_k1,i,j,k);
+						p=G3D(P_optimizado,i,j,k);
+						S3D(M,i,j,k, m_ant* (plus_i+minus_i+plus_j+minus_j+plus_k+minus_k-6*c));
+						m =G3D(M,i,j,k);
+						c_ant= G3D(C,i,j,k);
+						S3D(P,i,j,k, p * c * (1 - c / C_max));
+						p_nuevo= G3D(P,i,j,k);
+								
+								S3D(C_k2,i,j,k, c_ant + G3D(P,i,j,k) + m);
+								if (G3D(C_k2,i,j,k) > C_max){
+									S3D(C_k2,i,j,k, C_max);
+								}
+								if (G3D(C_k2,i,j,k) < 0.00001){
+									S3D(C_k2,i,j,k,0);
+								}
 					}
-					if(G3D(C,i,j,k) >= 1e7){
-						cantidad2=cantidad2+1;
+				   }
+			       }
+		  
+		       //Calcular error y actualizar
+		       error = restaMax(C_k1,C_k2);
+		       iter++;
+			}
+		    }
+		    // Actualizar malla
+		    
+		    copyMatrix(C,C_k2);
 
-						if ((i>80)&&(i<102)&&(j>90)&&(j<117)&&(k>61)&&(k<71)){ //area del foramen del tentorio
-							cantidad3=cantidad3+2;
 
-						}else{
-							if(pertenece(cerebelo,G3D(talairach,i,j,k)))
-									cantidad3=cantidad3+2;
-							if(pertenece(tallo,G3D(talairach,i,j,k)))//tallo cerebral, medula, protuberancia, mesensefalo
-									cantidad3=cantidad3+2;
-							if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
-									cantidad3=cantidad3+1;
-							}
-						
-					
-					 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
-							buscar_areas_Broodman(i,j,k,B);
-						}
-	   				}
-				} 
-			}  
-		}   
-	}
-		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
 
-	}
+			}
 	
 
 }
@@ -50,55 +90,20 @@ void iteracion_temporal(){
 
 int main(){
 	
-	
-
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
-	printf ("Preprocessing difusion Matrix\n");
-//	dumpMatrixToVtk(cerebro, "cerebro difusion");
-	printf ("Preprocessing talairach Matrix\n");
-  //      dumpMatrixToVtk(talairach, "talairach");
-
-
-
-
-    	printf ("Difusion\n");
+    printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
-    //    dumpMatrixToVtk(D, "matriz D");
-	info.open("info.txt");
-	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-
-	
-	
-  	info << "Simulacion del paciente \n" ;
-
-
-
-	//A PARTIR DE ACA SE CUENTA EL TIEMPO, ESTO SE PUEDE MODIFICAR PARA QUE SE CUENTE EN OTRO LUGAR
-	double t1,t2,elapsed;
-    	struct timeval tp;
-   	int rtn;
-
-    	rtn=gettimeofday(&tp, NULL);
-    	t1=(double)tp.tv_sec+(1.e-6)*tp.tv_usec;  
-  
 	printf ("Ejecutando iteracion temporal\n");
+	time_t sec1,sec2;
+	time(&sec1); // tiempo en segundos
 	iteracion_temporal();
-
-	info.close();
-	datos.close();
-	//fin toma tiempos
-	rtn=gettimeofday(&tp, NULL);
-        t2=(double)tp.tv_sec+(1.e-6)*tp.tv_usec;
-        elapsed=t2-t1;
-        printf("Tiempo empleado: %g\n",elapsed);
-
-	printf ("Preprocessing result Matrix\n");
-	dumpMatrixToVtk(C, "tumor_out_serial");   
-	dividir(C,64);
-	dumpMatrixToVtk(C, "tumor_out_div");   
+	// proceso cuya duracion quieres medir
+	time(&sec2);
+	cout << sec2-sec1 << endl;
 	cout<< "PROCESO TERMINADO"<<endl;
+
 	return 0;
 	}
