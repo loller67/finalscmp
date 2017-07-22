@@ -88,6 +88,20 @@ void iteracion_temporal(){
 }
 
 
+void blurMatrix3d(VECTOR3D& m, int i, int j, int k){
+    
+    for (int x = 1; x < i; x++){
+        for (int y = 1; y < j; y++){
+            for (int z = 1; z < k; z++){
+                double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
+                S3D( m, x,  y,  z,  val);
+            }
+        }
+    }
+    
+}
+
+
 int main(){
 	
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz

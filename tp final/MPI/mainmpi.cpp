@@ -56,6 +56,20 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
 
 }
 
+
+void blurMatrix3d(VECTOR3D& m, int i, int j, int k){
+    
+    for (int x = 1; x < i; x++){
+        for (int y = 1; y < j; y++){
+            for (int z = 1; z < k; z++){
+                double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
+                S3D( m, x,  y,  z,  val);
+            }
+        }
+    }
+    
+}
+
 int main(){
  // Initialize the MPI environment
      MPI_Init(NULL, NULL);
