@@ -70,6 +70,37 @@ void blurMatrix3d(VECTOR3D& m, int i, int j, int k){
     
 }
 
+void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que estar cargado con todos ceros y ya con la dimension dada y n debe ser el crecimiento
+
+// dentro de cada matriz al hacer el crecimiento siempre se crea n/2 filas y una n/2 columnas de CEROS para luego correr el blur 
+
+	for(int i=0;i<ii;i++){
+		for(int j=0; j<jj;j++){
+			for(int k=0; k<kk;k++){
+			
+			//aca falta armar la logica del "crecimiento de la matriz", deberia quedar algo asi
+			/*
+			1 n vacios/2 2 n vacios/2 3 
+			n vacios/2 
+			4 n vacios/2 5 n vacios/2 6
+			n vacios/2 
+			7 n vacios/2 8 n vacios/2 9 
+
+			*/
+			S3D(res,n/2*i,n/2*j,n/2*k,G3D(m,i,j,k));
+
+
+			}
+
+
+		}
+
+	}
+
+}
+
+
+
 int main(){
  // Initialize the MPI environment
      MPI_Init(NULL, NULL);
