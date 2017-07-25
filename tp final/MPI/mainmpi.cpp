@@ -100,6 +100,49 @@ void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que e
 }
 
 
+void blur(VECTOR3D& m, int i, int j, int k){
+    
+    for (int x = 1; x < i; x++){
+        for (int y = 1; y < j; y++){
+            for (int z = 1; z < k; z++){
+                double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
+                S3D( m, x,  y,  z,  val);
+            }
+        }
+    }
+    
+}
+
+
+void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que estar cargado con todos ceros y ya con la dimension dada y n debe ser el crecimiento
+
+// dentro de cada matriz al hacer el crecimiento siempre se crea n/2 filas y una n/2 columnas de CEROS para luego correr el blur 
+
+	for(int i=0;i<ii;i++){
+		for(int j=0; j<jj;j++){
+			for(int k=0; k<kk;k++){
+			
+			//aca falta armar la logica del "crecimiento de la matriz", deberia quedar algo asi
+			/*
+			1 n vacios/2 2 n vacios/2 3 
+			n vacios/2 
+			4 n vacios/2 5 n vacios/2 6
+			n vacios/2 
+			7 n vacios/2 8 n vacios/2 9 
+
+			*/
+			S3D(res,n/2*i,n/2*j,n/2*k,G3D(m,i,j,k));
+
+
+			}
+
+
+		}
+
+	}
+
+}
+
 
 int main(){
  // Initialize the MPI environment
@@ -164,6 +207,8 @@ int main(){
         //dumpMatrixToVtk(D, "matriz D");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
+	extender(C,C_EXT,2);
+	blur(C_EXT,iii-1,jjj-1,kkk-2);
 
 
 //A PARTIR DE ACA SE CUENTA EL TIEMPO, ESTO SE PUEDE MODIFICAR PARA QUE SE CUENTE EN OTRO LUGAR

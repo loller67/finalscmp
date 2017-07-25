@@ -27,7 +27,10 @@
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
-
+bool extendi = true;
+int iii = 181 + 2; //En la imagen final se ven como columnas x) 
+int jjj = 217 + 2; //En la imagen final se ven como filas y)
+int kkk = 181 + 2; // (slices,z)
 ofstream info;
 ofstream aux;
 ofstream datos;
@@ -130,8 +133,9 @@ VECTOR3D P = CREATEM3D(ii,jj,kk);
 VECTOR3D M = CREATEM3D(ii,jj,kk);
 VECTOR3D C_k2 = CREATEM3D(ii,jj,kk);
 VECTOR3D C_k1 = CREATEM3D(ii,jj,kk);
-//Variables MPI
 
+VECTOR3D C_EXT = CREATEM3D(iii,jjj,kkk);
+//Variables MPI
 int world_rank;
 int world_size;
 int chunkSize = 1;
@@ -208,7 +212,12 @@ bool pertenece(vector<int> v, int val){
 
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 
+if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
 
+	}
 
 	for(int k=0;k<chunkSize;k++){
 		for(int i=0;i<ii;i++){
@@ -227,7 +236,12 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 }
 
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
+if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
 
+	}
 	double max=0;
 	double m1=0;
 	double m2=0;
@@ -278,6 +292,12 @@ void cargar_vectores(){
 }
 
 void imprimir_matriz(VECTOR3D &mat){
+if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
 for(int i=0;i<ii;i++){
 
 	for(int j=0;j<jj;j++){
@@ -580,6 +600,12 @@ void guardar_datos(int n,double error,int cantidad1,int cantidad2,int cantidad3,
 }
 
 void iteracion_de_convergencia(int n,int cantidad1,int cantidad2,int cantidad3,vector<int>& B,vector<int>& B_R, vector<int>& B_T,VECTOR3D &C,VECTOR3D &C_k1,VECTOR3D &C_k2){
+if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
 	double max_error=0;
 	if (dia <= 1500){
 	max_error = 1;
