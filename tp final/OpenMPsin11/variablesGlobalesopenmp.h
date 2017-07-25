@@ -24,14 +24,17 @@
 using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
-
+bool extendi = true;
+int ii = 181; //En la imagen final se ven como columnas x) 
+int jj = 217; //En la imagen final se ven como filas y)
+int kk = 181; // (slices,z)
+int iii = 181 + 2; //En la imagen final se ven como columnas x) 
+int jjj = 217 + 2; //En la imagen final se ven como filas y)
+int kkk = 181 + 2; // (slices,z)
 ofstream info;
 ofstream datos;
 double dt = 0.1;//dias
 double h = 1;//mm, malla de 181x217x181 mm (18x22x18 cm)
-int ii = 181; //En la imagen final se ven como columnas x) 
-int jj = 217; //En la imagen final se ven como filas y)
-int kk = 181; // (slices,z)
 double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
@@ -92,6 +95,7 @@ VECTOR3D C_k1 = CREATEM3D(ii,jj,kk);
 VECTOR3D P = CREATEM3D(ii,jj,kk);
 
 VECTOR3D M = CREATEM3D(ii,jj,kk);
+VECTOR3D C_EXT = CREATEM3D(iii,jjj,kkk);
 
 //FUNCIONES
 
@@ -108,6 +112,14 @@ bool pertenece(vector<int> v, int val){
 //guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 
+
+	if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
+
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
 			for(int k=0;k<kk;k++){
@@ -123,6 +135,15 @@ void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
 }
 //funcion para normalizar los valores de una matriz
 void dividir(VECTOR3D &m, int num){
+
+
+	
+	if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
 
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
@@ -145,6 +166,16 @@ double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 	double m1=0;
 	double m2=0;
 	double abs=0;
+
+
+
+	if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
+
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
 			for(int k=0;k<kk;k++){
@@ -213,6 +244,10 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
 //Funcion que inicializa matriz D y p
 void TransformDifusion(){
 	
+
+
+
+
 for(int k=0;k<kk;k++){
     for(int j=0;j<jj;j++){
         for(int i=0;i<ii;i++){

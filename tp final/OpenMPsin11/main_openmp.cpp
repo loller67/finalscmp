@@ -2,8 +2,21 @@
 //DEJO ITERACION TEMPORAL ACA PARA NO HACER TANTO QUILOMBO EN EL .h
 void iteracion_temporal(){
 
-	for(int n=0;n<nn;n++){
+	if(extendi == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
 
+	}
+
+
+
+	for(int n=0;n<nn;n++){
+		if(n % 100 ==0){
+
+		cout<<n<<endl;
+
+		}
 		double max_error=0;
 		int i,j,k;
 		if (dia <= 1500){
@@ -70,12 +83,14 @@ void iteracion_temporal(){
 
 
 			}
+
+
 	
 
 }
 
 
-void blurMatrix3d(VECTOR3D& m, int i, int j, int k){
+void blur(VECTOR3D& m, int i, int j, int k){
     
     for (int x = 1; x < i; x++){
         for (int y = 1; y < j; y++){
@@ -123,10 +138,15 @@ int main(){
 	
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
-    printf ("Difusion\n");
+   	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
+
+	// para el momento de aplicar extender y blur, tambien seteamos extendi en true para no hacer lio con el ii jj kk
+	extender(C,C_EXT,2);
+	blur(C_EXT,iii-1,jjj-1,kkk-2);
+
 	printf ("Ejecutando iteracion temporal\n");
 	iteracion_temporal();
 	cout<< "PROCESO TERMINADO"<<endl;

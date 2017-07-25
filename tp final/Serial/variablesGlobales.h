@@ -25,6 +25,11 @@ using namespace std;
 
 //Variables globales porque se me hace mas comodo :B
 
+
+bool extender = false;
+int iii = ii + 2; //En la imagen final se ven como columnas x) 
+int jjj = jj + 2; //En la imagen final se ven como filas y)
+int kkk = kk + 2; // (slices,z)
 ofstream info;
 ofstream datos;
 double dt = 0.1;//dias
@@ -141,7 +146,12 @@ bool pertenece(vector<int> v, int val){
 }
 //guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
+	if(extender == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
 
+	}
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
 			for(int k=0;k<kk;k++){
@@ -174,7 +184,12 @@ void dividir(VECTOR3D &m, int num){
 }
 //calcula el valor de la resta maxima de todas las dimensiones de las dos matrices
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
+	if(extender == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
 
+	}
 	double max=0;
 	double m1=0;
 	double m2=0;
@@ -225,6 +240,13 @@ void cargar_vectores(){
 }
 // imprime valores de la matriz, usado para debuggear
 void imprimir_matriz(VECTOR3D &mat){
+if(extender == true){
+		ii = iii;
+		jj=jjj;
+		kk= kkk;
+
+	}
+
 for(int i=0;i<ii;i++){
 
 	for(int j=0;j<jj;j++){
