@@ -26,17 +26,13 @@ using namespace std;
 //Variables globales porque se me hace mas comodo :B
 
 
-bool extender = false;
-int iii = ii + 2; //En la imagen final se ven como columnas x) 
-int jjj = jj + 2; //En la imagen final se ven como filas y)
-int kkk = kk + 2; // (slices,z)
 ofstream info;
 ofstream datos;
 double dt = 0.1;//dias
 double h = 1;//mm, malla de 181x217x181 mm (18x22x18 cm)
-int ii = 181; //En la imagen final se ven como columnas x) 
-int jj = 217; //En la imagen final se ven como filas y)
-int kk = 181; // (slices,z)
+int ii = 181+2; //En la imagen final se ven como columnas x) 
+int jj = 217+2; //En la imagen final se ven como filas y)
+int kk = 181+2; // (slices,z)
 double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
@@ -60,7 +56,6 @@ int cantidad3 = 0; //para letalidad
   vector<int>  estriado({349,350,351,435,436,464,465,492,493,494,495,496,571,598,601,692,693,379,382,596,597}); 
   vector<int>  globo({452,455,456,457,593,594,595,341,342,453,454,379,382,452,455,456,457,501,640,181,182,183,219,356,358,449,450,513});
   vector<int>  medula({5,6,71,72,215,216,341,342,343,344,354,355,437,438,440,453,454,498,499,574});
-vector<int> aux;
 
   vector<int> x(ii);
   vector<int> y(jj);
@@ -121,6 +116,9 @@ vector<int> B_R(47, 0); //vector que guarda areas de Brodmann relativizadas
 VECTOR3D cerebro = CREATEM3D(ii,jj,kk);
 VECTOR3D talairach = CREATEM3D(ii,jj,kk);
 
+VECTOR3D cerebro_aux = CREATEM3D(181,217,181);
+VECTOR3D talairach_aux = CREATEM3D(181,217,181);
+
 VECTOR3D p = CREATEM3D(ii,jj,kk);
 VECTOR3D D = CREATEM3D(ii,jj,kk);
 VECTOR3D C = CREATEM3D(ii,jj,kk);
@@ -146,12 +144,7 @@ bool pertenece(vector<int> v, int val){
 }
 //guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
-	if(extender == true){
-		ii = iii;
-		jj=jjj;
-		kk= kkk;
-
-	}
+	
 	for(int i=0;i<ii;i++){
 		for(int j=0;j<jj;j++){
 			for(int k=0;k<kk;k++){
@@ -184,12 +177,7 @@ void dividir(VECTOR3D &m, int num){
 }
 //calcula el valor de la resta maxima de todas las dimensiones de las dos matrices
 double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
-	if(extender == true){
-		ii = iii;
-		jj=jjj;
-		kk= kkk;
-
-	}
+	
 	double max=0;
 	double m1=0;
 	double m2=0;
@@ -240,12 +228,7 @@ void cargar_vectores(){
 }
 // imprime valores de la matriz, usado para debuggear
 void imprimir_matriz(VECTOR3D &mat){
-if(extender == true){
-		ii = iii;
-		jj=jjj;
-		kk= kkk;
 
-	}
 
 for(int i=0;i<ii;i++){
 

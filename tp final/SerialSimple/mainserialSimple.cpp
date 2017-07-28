@@ -57,8 +57,7 @@ int main(){
 	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-
-	
+		
 	
   	info << "Simulacion del paciente \n" ;
 
