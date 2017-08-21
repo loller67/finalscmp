@@ -30,17 +30,12 @@ void iteracion_temporal(){
 							if(!pertenece(cerebelo,G3D(talairach,i,j,k)&& !pertenece(tallo,G3D(talairach,i,j,k))))
 									cantidad3=cantidad3+1;
 							}
-						
-					
-					 	if (G3D(D,i,j,k)==0.051){ //si estoy en corteza (de cerebro o cerebelo)
-							buscar_areas_Broodman(i,j,k,B);
-						}
 	   				}
 				} 
 			}  
 		}   
 	}
-		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T);
+		iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3);
 
 	}
 	
@@ -50,17 +45,22 @@ void iteracion_temporal(){
 
 
 void blur(VECTOR3D& m, int i, int j, int k){
-    
-    for (int x = 1; x < i; x++){
-        for (int y = 1; y < j; y++){
-            for (int z = 1; z < k; z++){
-                double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
-                S3D( m, x,  y,  z,  val);
-            }
-        }
-    }
-    
-}
+  
+
+for(int n= 0;n<1;n++ ){
+		for (int x = 1; x < i; x++){
+		        for (int y = 1; y < j; y++){
+		                    for (int z = 1; z < k; z++){
+		                                    double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
+		                                                    S3D( m, x,  y,  z,  val);
+		                            }
+			                            }
+			                                       }
+	 
+
+			}	
+ }
+
 
 void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que estar cargado con todos ceros y ya con la dimension dada y n debe ser el crecimiento
 
@@ -95,56 +95,29 @@ void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que e
 int main(){
 	
 	
-
-	ReadDifussionData("./Cerebro.csv", 0, 0, 0, 181-1, 217-1, 181-1, cerebro);//lee del archivo a matriz
-	ReadDifussionData("./Talaraich.csv", 0, 0, 0, 181-1, 217-1, 181-1, talairach);//lee del archivo a matriz
-	printf ("Preprocessing difusion Matrix\n");
+	ReadDifussionData("./Cerebro.csv", 0, 0, 0, 181-1, 217-1, 181-1, cerebro_aux);//lee del archivo a matriz
+	ReadDifussionData("./Talaraich.csv", 0, 0, 0, 181-1, 217-1, 181-1, talairach_aux);//lee del archivo a matriz
+	//extender(talairach_aux,talairach,2);
+	//extender(cerebro_aux,cerebro,2);
+	//printf ("Blur cerebro\n");
+	//blur(cerebro,ii-1,jj-1,kk-1);
+	//printf ("Blur Tala\n");
+	//blur(talairach, ii-1,jj-1,kk-1);
 	//dumpMatrixToVtk(cerebro, "cerebro difusion");
-	printf ("Preprocessing talairach Matrix\n");
-        //dumpMatrixToVtk(talairach, "talairach");
-	extender(talairach_aux,talairach,2);
-        extender(cerebro_aux,cerebro,2);
-        blur(cerebro,ii-1,jj-1,kk-1);
-        blur(talairach, ii-1,jj-1,kk-1);
-
-
-
-
-    	printf ("Difusion\n");
+	//dumpMatrixToVtk(talairach, "el taladro papaaa");
+   	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
-        //dumpMatrixToVtk(D, "matriz D");
-	info.open("info.txt");
-	datos.open("datos.txt");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-
-	
-	
-  	info << "Simulacion del paciente \n" ;
-
-
-
-	//A PARTIR DE ACA SE CUENTA EL TIEMPO, ESTO SE PUEDE MODIFICAR PARA QUE SE CUENTE EN OTRO LUGAR
-	double t1,t2,elapsed;
-    	struct timeval tp;
-   	int rtn;
-
-    	rtn=gettimeofday(&tp, NULL);
-    	t1=(double)tp.tv_sec+(1.e-6)*tp.tv_usec;  
-  
 	printf ("Ejecutando iteracion temporal\n");
+	time_t sec1,sec2;
+	time(&sec1); // tiempo en segundos
+	// para el momento de aplicar extender y blur, tambien seteamos extendi en true para no hacer lio con el ii jj kk
 	iteracion_temporal();
-
-	info.close();
-	datos.close();
-	//fin toma tiempos
-	rtn=gettimeofday(&tp, NULL);
-        t2=(double)tp.tv_sec+(1.e-6)*tp.tv_usec;
-        elapsed=t2-t1;
-        printf("Tiempo empleado: %g\n",elapsed);
-
-	printf ("Preprocessing result Matrix\n");
-	dumpMatrixToVtk(C, "tumor_out");   
+	// proceso cuya duracion quieres medir
+	time(&sec2);
+	cout << sec2-sec1 << endl;
+	cout << "VERSION SERIAL TAMAÑO " << ii <<jj <<kk<<endl; 
 	cout<< "PROCESO TERMINADO"<<endl;
 	return 0;
 	}

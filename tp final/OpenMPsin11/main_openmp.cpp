@@ -18,7 +18,9 @@ void iteracion_temporal(){
 		copyMatrix(C_k2,C);
 
 		while((iter < max_iter) && (error > max_error)){
+
 			S3D(C_k1,io,jo,ko,G3D(C_k2,io,jo,ko));
+
 		       //Calcular dominio
 			if (G3D(C,io,jo,ko) < C_mig){ //proliferacion
 				S3D(M,io,jo,ko,0);
@@ -91,15 +93,19 @@ void iteracion_temporal(){
 
 void blur(VECTOR3D& m, int i, int j, int k){
   
-        for (int x = 1; x < i; x++){
-                for (int y = 1; y < j; y++){
-                            for (int z = 1; z < k; z++){
-                                            double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
-                                                            S3D( m, x,  y,  z,  val);
-                                    }
-	                                    }
-        	                                       }
- 
+
+for(int n= 0;n<1;n++ ){
+		for (int x = 1; x < i; x++){
+		        for (int y = 1; y < j; y++){
+		                    for (int z = 1; z < k; z++){
+		                                    double val = (G3D(m,x,y,z)+G3D(m,x+1,y,z)+G3D(m,x-1,y,z)+G3D(m,x,y+1,z)+G3D(m,x,y-1,z)+G3D(m,x,y,z+1)+G3D(m,x,y,z-1))/8.0;
+		                                                    S3D( m, x,  y,  z,  val);
+		                            }
+			                            }
+			                                       }
+	 
+
+			}	
  }
 
 
@@ -111,21 +117,43 @@ void extender (VECTOR3D& m,VECTOR3D& res, int n){//precondicion, res tiene que e
 	for(int i=0;i<ii;i++){
 			for(int j=0; j<jj;j++){
 						for(int k=0; k<kk;k++){
-						//aca falta armar la logica del "crecimiento de la matriz", deberia quedar algo asi
-									/*
-							1 n vacios/2 2 n vacios/2 3 
-								n vacios/2 
-															4 n vacios/2 5 n vacios/2 6
-							n vacios/2 
-				7 n vacios/2 8 n vacios/2 9 
-																							*/
-						S3D(res,n/2*i,n/2*j,n/2*k,G3D(m,i,j,k));
+									S3D(res,n/2*i,n/2*j,n/2*k,G3D(m,i,j,k));
 
 									}
 						}
 				}
 }
 
+// guarda los valores de la matriz en el archivo .vtk
+void dumpMatrixToVtk(VECTOR3D &mat, string fileId){
+    cout << "Dumping to VTK..." << endl;
+    
+    long numDataPoints = ii * jj * kk;
+    
+    std::filebuf fbmc;
+    fbmc.open ("./" + fileId + ".vtk",std::ios::out);
+    std::ostream osmc(&fbmc);
+    
+    osmc << "# vtk DataFile Version 2.0" << endl;
+    osmc << "Comment goes here" << endl;
+    osmc << "ASCII" << endl;
+    
+    osmc << "DATASET STRUCTURED_POINTS" << endl;
+    osmc << "DIMENSIONS    " <<  ii << " " << jj << " " << kk << endl;
+    
+    osmc << "ORIGIN    45.000   50.000   45.000" << endl;
+    osmc << "SPACING    1.000   1.000   1.000" << endl;
+    
+    osmc << "POINT_DATA   " << numDataPoints << endl;
+    osmc << "SCALARS scalars double" << endl;
+    osmc << "LOOKUP_TABLE default" << endl;
+    
+    for (int i = 0; i < mat.size();i++)
+        osmc << mat[i] << endl;
+    
+    
+    fbmc.close();
+}
 
 
 int main(){
@@ -134,8 +162,12 @@ int main(){
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, 181-1, 217-1, 181-1, talairach_aux);//lee del archivo a matriz
 	extender(talairach_aux,talairach,2);
 	extender(cerebro_aux,cerebro,2);
+	printf ("Blur cerebro\n");
 	blur(cerebro,ii-1,jj-1,kk-1);
+	printf ("Blur Tala\n");
 	blur(talairach, ii-1,jj-1,kk-1);
+	//dumpMatrixToVtk(cerebro, "cerebro difusion");
+	//dumpMatrixToVtk(talairach, "el taladro papaaa");
    	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
 	printf ("Preprocessing initial brain Matrix\n");

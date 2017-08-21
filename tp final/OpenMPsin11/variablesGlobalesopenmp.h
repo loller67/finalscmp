@@ -20,17 +20,31 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 30
+#define threads 1
 using namespace std;
+
+
+double f0 = (181+2)/181;
+double f1 = (217+2)/217;
+
+//Cuando hacés crecer por un factor f > 1
+
+int ii =  f0 * 181;
+int jj =  f1 * 217;
+int kk=   f0* 181 ;
+
+int io = f0  * 32;
+int jo = f1  * 98;
+int ko = f0  * 85;
 
 //Variables globales porque se me hace mas comodo :B
 ofstream info;
 ofstream datos;
 double dt = 0.1;//dias
 double h = 1;//mm, malla de 181x217x181 mm (18x22x18 cm)
-int ii = 181 + 2; //En la imagen final se ven como columnas x) 
-int jj = 217 + 2; //En la imagen final se ven como filas y)
-int kk = 181 + 2; // (slices,z)
+//int ii = 181 + 2; //En la imagen final se ven como columnas x) 
+//int jj = 217 + 2; //En la imagen final se ven como filas y)
+//int kk = 181 + 2; // (slices,z)
 double C0 = 0; //concentracion inicial de celulas tumorales (por mm3)
 double C_max = 1e8; //concentracion maxima de celulas (por mm3)
 double C_mig = 1e7; //concentracion de celulas a la que comienza la migracion (por mm3)
@@ -40,12 +54,17 @@ int max_iter = 100;
 int dia = 1;
 int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
 int diagnostico = 3188; //Para diagnostico a un diametro de 18.26 mm
-int io = 32;
-int jo = 98;
-int ko = 85;
+//int io = 32;
+//int jo = 98;
+//int ko = 85;
 int cantidad1 = 0; //para deteccion de celulas tumorales
 int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
+
+
+
+
+
 
 
 int myints1[] = {508,509,510,514,515,651,652,657,694,695,711,712,713,714,715};
@@ -264,19 +283,22 @@ for(int k=0;k<kk;k++){
 void inicializarCondiciones(){
 	
 	//Origen del tumor en:
-	int io = 32;
-	int jo = 98;
-	int ko = 85;
 	for(int k=0;k<kk;k++){
 	   for(int j=0;j<jj;j++){
 	       for(int i=0;i<ii;i++){
-	       S3D(C,i,j,k,C0);
+		if(io==i && jo==j && ko==k){
+
+		S3D(C,io,jo,ko,1);
+		}else{
+			S3D(C,i,j,k,C0);
+		}
+	       
 	       }
 		}
 	}	  
 	     
-
-	S3D(C,io,jo,ko,1);
+	
+	
 
 	int dia = 1;
 	int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
@@ -286,6 +308,7 @@ void inicializarCondiciones(){
 	for(int k=1;k<kk-1;k++){ 
 	    for(int j=1;j<jj-1;j++){
 		for(int i=1;i<ii-1;i++){
+		
 		    S3D(P_optimizado,i,j,k,dt * G3D(p,i,j,k));
 		    S3D(M_optimizado,i,j,k,dt * G3D(D,i,j,k) / (h*h));
 		}

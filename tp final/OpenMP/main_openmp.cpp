@@ -106,7 +106,7 @@ int main(){
 	
 	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
 	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
-    printf ("Difusion\n");
+	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();

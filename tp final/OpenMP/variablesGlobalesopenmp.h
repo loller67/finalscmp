@@ -49,6 +49,9 @@ int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
 
 
+
+
+
 int myints1[] = {508,509,510,514,515,651,652,657,694,695,711,712,713,714,715};
 vector<int> callo (myints1, myints1 + sizeof(myints1) / sizeof(int) );
 
