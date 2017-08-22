@@ -48,7 +48,7 @@ void iteracion_temporal(VECTOR3D &C_slice,VECTOR3D &CK1_slice,VECTOR3D &CK2_slic
         doHaloTransfer(C_slice, world_rank, world_size, workingSize);
         
         MPI_Barrier(MPI_COMM_WORLD);
-	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,B,B_R,B_T,C_slice,CK1_slice,CK2_slice);
+	iteracion_de_convergencia(n,cantidad1,cantidad2,cantidad3,C_slice,CK1_slice,CK2_slice);
 
 	}
 	
@@ -110,17 +110,8 @@ int main(){
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
  //if (world_rank == 0) {
 	
-	ReadDifussionData("./Cerebro.csv", 0, 0, 0, 181-1, 217-1, 181-1, cerebro_aux);//lee del archivo a matriz
-	ReadDifussionData("./Talaraich.csv", 0, 0, 0, 181-1, 217-1, 181-1, talairach_aux);//lee del archivo a matriz
-	printf ("Preprocessing difusion Matrix\n");
-	//dumpMatrixToVtk(cerebro, "cerebro difusion");
-	printf ("Preprocessing talairach Matrix\n");
-      //  dumpMatrixToVtk(talairach, "talairach");
-        extender(talairach_aux,talairach,2);
-        extender(cerebro_aux,cerebro,2);
-        blur(cerebro,ii-1,jj-1,kk-1);
-        blur(talairach, ii-1,jj-1,kk-1);
-
+	ReadDifussionData("./Cerebro.csv", 0, 0, 0, ii-1, jj-1, kk-1, cerebro);//lee del archivo a matriz
+	ReadDifussionData("./Talaraich.csv", 0, 0, 0, ii-1, jj-1, kk-1, talairach);//lee del archivo a matriz
 
 	printf ("Difusion\n");
 	TransformDifusion();//inicializa valores de la matriz
@@ -210,7 +201,7 @@ int main(){
 		printf("Tiempo empleado: %g\n",elapsed);
 
 		printf ("Preprocessing result Matrix\n");
-		dumpMatrixToVtk(C, "tumor_out");   
+		//dumpMatrixToVtk(C, "tumor_out");   
 		cout<< "PROCESO TERMINADO"<<endl;
         }   
 
