@@ -20,12 +20,11 @@
 #define S3D(V,X,Y,Z,S)  V[(Z) * ((ii) * (jj)) + (Y) * (ii) + (X)]=S
 #define CREATEM3D(ii,jj,kk) std::vector<double>((ii)*(jj)*(kk))
 #define VECTOR3D std::vector<double>
-#define threads 1
+#define threads 6
 using namespace std;
 
-
-double f0 = (181+2)/181;
-double f1 = (217+2)/217;
+double f0 = (181+0)/181;
+double f1 = (217+0)/217;
 
 //Cuando hacés crecer por un factor f > 1
 
@@ -60,11 +59,6 @@ int diagnostico = 3188; //Para diagnostico a un diametro de 18.26 mm
 int cantidad1 = 0; //para deteccion de celulas tumorales
 int cantidad2 = 0; //para diagnostico
 int cantidad3 = 0; //para letalidad
-
-
-
-
-
 
 
 int myints1[] = {508,509,510,514,515,651,652,657,694,695,711,712,713,714,715};
@@ -127,11 +121,14 @@ bool pertenece(vector<int> v, int val){
 }
 //guarda en mat1 el contenido de mat2
 void copyMatrix(VECTOR3D &mat1, VECTOR3D &mat2){
-for(int i=0;i<ii;i++){
-		for(int j=0;j<jj;j++){
-			for(int k=0;k<kk;k++){
-
-				S3D(mat1,i,j,k,G3D(mat2,i,j,k));
+int aux;
+int i,j,k;
+#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k,aux) num_threads(threads)
+for(i=0;i<ii;i++){
+		for(j=0;j<jj;j++){
+			for(k=0;k<kk;k++){
+				aux=G3D(mat2,i,j,k);
+				S3D(mat1,i,j,k,aux);
 
 
 			}
@@ -142,9 +139,11 @@ for(int i=0;i<ii;i++){
 }
 //funcion para normalizar los valores de una matriz
 void dividir(VECTOR3D &m, int num){
-for(int i=0;i<ii;i++){
-		for(int j=0;j<jj;j++){
-			for(int k=0;k<kk;k++){
+int i,j,k;
+#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k) num_threads(threads)
+for(i=0;i<ii;i++){
+		for(j=0;j<jj;j++){
+			for(k=0;k<kk;k++){
 
 				S3D(m,i,j,k,G3D(m,i,j,k)/num);
 
@@ -162,9 +161,11 @@ double restaMax(VECTOR3D &mat1, VECTOR3D &mat2){
 	double m1=0;
 	double m2=0;
 	double abs=0;
-	for(int i=0;i<ii;i++){
-		for(int j=0;j<jj;j++){
-			for(int k=0;k<kk;k++){
+	int i,j,k;
+#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k,max,m1,m2,abs) num_threads(threads)
+	for(i=0;i<ii;i++){
+		for(j=0;j<jj;j++){
+			for(k=0;k<kk;k++){
 
 				m2=G3D(mat2,i,j,k);
 				m1=G3D(mat1,i,j,k);
@@ -230,6 +231,8 @@ void ReadDifussionData(string dataFile, int tamX, int tamY, int tamZ, int origin
 //Funcion que inicializa matriz D y p
 void TransformDifusion(){
 	
+int i,j,k;
+#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k) num_threads(threads)
 for(int k=0;k<kk;k++){
     for(int j=0;j<jj;j++){
         for(int i=0;i<ii;i++){
@@ -281,34 +284,32 @@ for(int k=0;k<kk;k++){
 
 //funcion que setea condiciones iniciales
 void inicializarCondiciones(){
-	
+	int i,j,k;
 	//Origen del tumor en:
-	for(int k=0;k<kk;k++){
-	   for(int j=0;j<jj;j++){
-	       for(int i=0;i<ii;i++){
-		if(io==i && jo==j && ko==k){
-
-		S3D(C,io,jo,ko,1);
-		}else{
-			S3D(C,i,j,k,C0);
-		}
-	       
+	int io = 32;
+	int jo = 98;
+	int ko = 85;
+#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k) num_threads(threads)  
+	for(k=0;k<kk;k++){
+	   for(j=0;j<jj;j++){
+	       for(i=0;i<ii;i++){
+	       S3D(C,i,j,k,C0);
 	       }
 		}
 	}	  
 	     
-	
-	
+
+	S3D(C,io,jo,ko,1);
 
 	int dia = 1;
 	int migracion = 0; // 0 para tumor benigno y 1 para tumor maligno
 	int diagnostico = 3188; //Para diagnostico a un diametro de 18.26 mm
 
 	//Optimizaciones:
-	for(int k=1;k<kk-1;k++){ 
-	    for(int j=1;j<jj-1;j++){
-		for(int i=1;i<ii-1;i++){
-		
+	#pragma omp parallel for collapse(3)  schedule(static) private(i,j,k) num_threads(threads)  
+	for(k=1;k<kk-1;k++){ 
+	    for(j=1;j<jj-1;j++){
+		for(i=1;i<ii-1;i++){
 		    S3D(P_optimizado,i,j,k,dt * G3D(p,i,j,k));
 		    S3D(M_optimizado,i,j,k,dt * G3D(D,i,j,k) / (h*h));
 		}
