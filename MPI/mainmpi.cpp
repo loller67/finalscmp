@@ -118,9 +118,6 @@ int main(){
         //dumpMatrixToVtk(D, "matriz D");
 	printf ("Preprocessing initial brain Matrix\n");
 	inicializarCondiciones();
-   	info.open("info.txt");
-	datos.open("datos.txt");
-	aux.open("aux.txt");
 
 //}
     MPI_Barrier(MPI_COMM_WORLD);
