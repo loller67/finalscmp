@@ -23,8 +23,8 @@
 #define threads 6
 using namespace std;
 
-double f0 = (181+0)/181;
-double f1 = (217+0)/217;
+double f0 = (181+200)/181;
+double f1 = (217+200)/217;
 
 //Cuando hacés crecer por un factor f > 1
 
